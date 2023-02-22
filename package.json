@@ -1,7 +1,7 @@
 {
   "name": "@travelerdev/prisma-generator-nestjs-dto",
   "description": "Generates DTO and Entity classes from Prisma Schema for NestJS",
-  "version": "1.16.3",
+  "version": "1.17.3",
   "license": "Apache-2.0",
   "author": {
     "name": "Benjamin Kroeger",
@@ -12,6 +12,10 @@
     {
       "name": "Brakebein",
       "url": "https://github.com/Brakebein"
+    },
+    {
+      "name": "Traveler Dev Ltd.",
+      "url": "https://travler.dev"
     }
   ],
   "main": "dist/index.js",
