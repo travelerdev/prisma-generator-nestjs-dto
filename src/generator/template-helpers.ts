@@ -98,6 +98,7 @@ interface MakeHelpersParam {
   outputType: string;
   noDependencies: boolean;
   definiteAssignmentAssertion: boolean;
+  requiredResponseApiProperty: boolean;
   prismaClientImportPath: string;
 }
 export const makeHelpers = ({
@@ -113,6 +114,7 @@ export const makeHelpers = ({
   outputType,
   noDependencies,
   definiteAssignmentAssertion,
+  requiredResponseApiProperty,
   prismaClientImportPath,
 }: MakeHelpersParam) => {
   const className = (name: string, prefix = '', suffix = '') =>
@@ -129,7 +131,7 @@ export const makeHelpers = ({
     )}`;
 
   const entityName = (name: string) =>
-    /dto$/i.test(name)
+    new RegExp(`${dtoSuffix || 'dto'}$`, 'i').test(name)
       ? className(name, '', '')
       : className(name, entityPrefix, entitySuffix);
   const connectDtoName = (name: string) =>
@@ -251,6 +253,7 @@ export const makeHelpers = ({
       outputType,
       noDependencies,
       definiteAssignmentAssertion,
+      requiredResponseApiProperty,
       prismaClientImportPath,
     },
     apiExtraModels,
