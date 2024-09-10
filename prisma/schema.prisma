@@ -47,9 +47,10 @@ model Product {
   /// @example 12
   reviewCount     Int           @default(0)
   type            ProductType[]
+  /// @DtoCreateOptional
   /// @ArrayNotEmpty
   /// @MinLength(3)
-  tags            String[]
+  tags            String[] @default(["hello"])
   /// @DtoCastType(MyType, my-package)
   attributes      Json?
   /// @DtoCastType(SomeType, ../types, CustomType)

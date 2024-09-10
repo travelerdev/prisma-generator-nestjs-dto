@@ -34,6 +34,8 @@ export function isAnnotatedWithDoc(field: ParsedField): boolean {
 function getDefaultValue(field: ParsedField): any {
   if (!field.hasDefaultValue) return undefined;
 
+  if (Array.isArray(field.default)) return JSON.stringify(field.default);
+
   switch (typeof field.default) {
     case 'string':
     case 'number':
