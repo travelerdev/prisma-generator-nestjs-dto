@@ -659,5 +659,11 @@ export const zipImportStatementParams = (
     {} as Record<ImportStatementParams['from'], ImportStatementParams>,
   );
 
-  return Object.values(itemsByFrom);
+  const imports = Object.values(itemsByFrom);
+
+  imports.forEach((item) => {
+    item.destruct?.sort();
+  });
+
+  return imports;
 };

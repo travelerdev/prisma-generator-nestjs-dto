@@ -277,13 +277,13 @@ export function makeImportsFromClassValidator(
   if (validator.size) {
     imports.push({
       from: 'class-validator',
-      destruct: [...validator.values()].sort(),
+      destruct: [...validator.values()],
     });
   }
   if (transformer.size) {
     imports.push({
       from: 'class-transformer',
-      destruct: [...transformer.values()].sort(),
+      destruct: [...transformer.values()],
     });
   }
 
