@@ -79,21 +79,10 @@ export const computeEntityParams = ({
           )}${path.sep}${templateHelpers.plainDtoFilename(field.type)}`,
         );
 
-        // don't double-import the same thing
-        // TODO should check for match on any import name ( - no matter where from)
-        if (
-          !imports.some(
-            (item) =>
-              Array.isArray(item.destruct) &&
-              item.destruct.includes(importName) &&
-              item.from === importFrom,
-          )
-        ) {
-          imports.push({
-            destruct: [importName],
-            from: importFrom,
-          });
-        }
+        imports.push({
+          destruct: [importName],
+          from: importFrom,
+        });
       }
     }
 
@@ -127,21 +116,10 @@ export const computeEntityParams = ({
           )}${path.sep}${templateHelpers.entityFilename(field.type)}`,
         );
 
-        // don't double-import the same thing
-        // TODO should check for match on any import name ( - no matter where from)
-        if (
-          !imports.some(
-            (item) =>
-              Array.isArray(item.destruct) &&
-              item.destruct.includes(importName) &&
-              item.from === importFrom,
-          )
-        ) {
-          imports.push({
-            destruct: [importName],
-            from: importFrom,
-          });
-        }
+        imports.push({
+          destruct: [importName],
+          from: importFrom,
+        });
       }
     }
 
