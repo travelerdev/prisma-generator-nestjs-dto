@@ -1,5 +1,5 @@
 import { DMMF } from '@prisma/generator-helper';
-import { IClassValidator, ParsedField } from './types';
+import { IClassValidator, ImportStatementParams, ParsedField } from './types';
 import { isRelation, isType } from './field-classifiers';
 
 const validatorsWithoutParams = [
@@ -256,4 +256,36 @@ export function decorateClassValidators(field: ParsedField): string {
   });
 
   return output;
+}
+
+export function makeImportsFromClassValidator(
+  classValidators: IClassValidator[],
+): ImportStatementParams[] {
+  const validator = new Set<string>();
+  const transformer = new Set<string>();
+
+  classValidators?.forEach((cv) => {
+    if (cv.name === 'Type') {
+      transformer.add(cv.name);
+    } else {
+      validator.add(cv.name);
+    }
+  });
+
+  const imports: ImportStatementParams[] = [];
+
+  if (validator.size) {
+    imports.push({
+      from: 'class-validator',
+      destruct: [...validator.values()].sort(),
+    });
+  }
+  if (transformer.size) {
+    imports.push({
+      from: 'class-transformer',
+      destruct: [...transformer.values()].sort(),
+    });
+  }
+
+  return imports;
 }

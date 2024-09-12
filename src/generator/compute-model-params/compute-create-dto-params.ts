@@ -46,7 +46,10 @@ import {
   makeImportsFromNestjsSwagger,
   parseApiProperty,
 } from '../api-decorator';
-import { parseClassValidators } from '../class-validator';
+import {
+  makeImportsFromClassValidator,
+  parseClassValidators,
+} from '../class-validator';
 
 interface ComputeCreateDtoParamsParam {
   model: Model;
@@ -240,22 +243,6 @@ export const computeCreateDtoParams = ({
     return [...result, mapDMMFToParsedField(field, overrides, decorators)];
   }, [] as ParsedField[]);
 
-  if (classValidators.length) {
-    if (classValidators.find((cv) => cv.name === 'Type')) {
-      imports.unshift({
-        from: 'class-transformer',
-        destruct: ['Type'],
-      });
-    }
-    imports.unshift({
-      from: 'class-validator',
-      destruct: classValidators
-        .filter((cv) => cv.name !== 'Type')
-        .map((v) => v.name)
-        .sort(),
-    });
-  }
-
   const importPrismaClient = makeImportsFromPrismaClient(
     fields,
     templateHelpers.config.prismaClientImportPath,
@@ -266,12 +253,15 @@ export const computeCreateDtoParams = ({
     apiExtraModels,
   );
 
+  const importClassValidator = makeImportsFromClassValidator(classValidators);
+
   return {
     model,
     fields,
     imports: zipImportStatementParams([
       ...importPrismaClient,
       ...importNestjsSwagger,
+      ...importClassValidator,
       ...imports,
     ]),
     extraClasses,

@@ -16,12 +16,15 @@ import type {
   ImportStatementParams,
   Model,
 } from '../types';
-import { parseClassValidators } from '../class-validator';
 import { TemplateHelpers } from '../template-helpers';
 import {
   makeImportsFromNestjsSwagger,
   parseApiProperty,
 } from '../api-decorator';
+import {
+  makeImportsFromClassValidator,
+  parseClassValidators,
+} from '../class-validator';
 import { DTO_CONNECT_HIDDEN } from '../annotations';
 
 interface ComputeConnectDtoParamsParam {
@@ -151,22 +154,6 @@ export const computeConnectDtoParams = ({
     return mapDMMFToParsedField(field, overrides, decorators);
   });
 
-  if (classValidators.length) {
-    if (classValidators.find((cv) => cv.name === 'Type')) {
-      imports.unshift({
-        from: 'class-transformer',
-        destruct: ['Type'],
-      });
-    }
-    imports.unshift({
-      from: 'class-validator',
-      destruct: classValidators
-        .filter((cv) => cv.name !== 'Type')
-        .map((v) => v.name)
-        .sort(),
-    });
-  }
-
   const importPrismaClient = makeImportsFromPrismaClient(
     fields,
     templateHelpers.config.prismaClientImportPath,
@@ -177,12 +164,15 @@ export const computeConnectDtoParams = ({
     apiExtraModels,
   );
 
+  const importClassValidator = makeImportsFromClassValidator(classValidators);
+
   return {
     model,
     fields,
     imports: zipImportStatementParams([
       ...importPrismaClient,
       ...importNestjsSwagger,
+      ...importClassValidator,
       ...imports,
     ]),
     extraClasses,
