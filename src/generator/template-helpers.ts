@@ -106,6 +106,7 @@ interface MakeHelpersParam {
   prismaClientImportPath: string;
   outputApiPropertyType: boolean;
   wrapRelationsAsType: boolean;
+  showDefaultValues: boolean;
 }
 export const makeHelpers = ({
   connectDtoPrefix,
@@ -125,6 +126,7 @@ export const makeHelpers = ({
   prismaClientImportPath,
   outputApiPropertyType,
   wrapRelationsAsType,
+  showDefaultValues,
 }: MakeHelpersParam) => {
   const className = (name: string, prefix = '', suffix = '') =>
     `${prefix}${transformClassNameCase(name)}${suffix}`;
@@ -273,6 +275,7 @@ export const makeHelpers = ({
       prismaClientImportPath,
       outputApiPropertyType,
       wrapRelationsAsType,
+      showDefaultValues,
     },
     apiExtraModels,
     entityName,

@@ -153,6 +153,11 @@ export const generate = async (options: GeneratorOptions) => {
     false,
   );
 
+  const showDefaultValues = stringToBoolean(
+    options.generator.config.showDefaultValues,
+    false,
+  );
+
   const results = run({
     output,
     dmmf: options.dmmf,
@@ -175,6 +180,7 @@ export const generate = async (options: GeneratorOptions) => {
     outputApiPropertyType,
     generateFileTypes,
     wrapRelationsAsType,
+    showDefaultValues,
   });
 
   const indexCollections: Record<string, WriteableFileSpecs> = {};

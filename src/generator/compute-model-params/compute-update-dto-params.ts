@@ -133,7 +133,11 @@ export const computeUpdateDtoParams = ({
     if (!isDtoOptional) {
       if (isId(field)) return result;
       if (isUpdatedAt(field)) return result;
-      if (isRequiredWithDefaultValue(field)) return result;
+      if (isRequiredWithDefaultValue(field)) {
+        if (templateHelpers.config.showDefaultValues)
+          overrides.isRequired = false;
+        else return result;
+      }
     }
 
     if (isAnnotatedWith(field, DTO_UPDATE_REQUIRED)) {

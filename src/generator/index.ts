@@ -37,6 +37,7 @@ interface RunParam {
   outputApiPropertyType: boolean;
   generateFileTypes: string;
   wrapRelationsAsType: boolean;
+  showDefaultValues: boolean;
 }
 
 export const run = ({
@@ -58,6 +59,7 @@ export const run = ({
     outputApiPropertyType,
     generateFileTypes,
     wrapRelationsAsType,
+    showDefaultValues,
     ...preAndSuffixes
   } = options;
 
@@ -82,6 +84,7 @@ export const run = ({
     requiredResponseApiProperty,
     outputApiPropertyType,
     wrapRelationsAsType,
+    showDefaultValues,
     ...preAndSuffixes,
   });
   const allModels = dmmf.datamodel.models;
