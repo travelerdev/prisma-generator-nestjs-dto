@@ -241,6 +241,18 @@ export const computeUpdateDtoParams = ({
     if (templateHelpers.config.noDependencies) {
       if (field.type === 'Json') field.type = 'Object';
       else if (field.type === 'Decimal') field.type = 'Float';
+
+      if (field.kind === 'enum') {
+        imports.push({
+          from: slash(
+            `${getRelativePath(
+              model.output.entity,
+              templateHelpers.config.outputPath,
+            )}${path.sep}enums`,
+          ),
+          destruct: [field.type],
+        });
+      }
     }
 
     return [...result, mapDMMFToParsedField(field, overrides, decorators)];
@@ -249,6 +261,7 @@ export const computeUpdateDtoParams = ({
   const importPrismaClient = makeImportsFromPrismaClient(
     fields,
     templateHelpers.config.prismaClientImportPath,
+    !templateHelpers.config.noDependencies,
   );
 
   const importNestjsSwagger = makeImportsFromNestjsSwagger(

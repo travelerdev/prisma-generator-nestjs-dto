@@ -102,6 +102,7 @@ interface MakeHelpersParam {
   noDependencies: boolean;
   definiteAssignmentAssertion: boolean;
   requiredResponseApiProperty: boolean;
+  outputPath: string;
   prismaClientImportPath: string;
   outputApiPropertyType: boolean;
   wrapRelationsAsType: boolean;
@@ -120,6 +121,7 @@ export const makeHelpers = ({
   noDependencies,
   definiteAssignmentAssertion,
   requiredResponseApiProperty,
+  outputPath,
   prismaClientImportPath,
   outputApiPropertyType,
   wrapRelationsAsType,
@@ -267,6 +269,7 @@ export const makeHelpers = ({
       noDependencies,
       definiteAssignmentAssertion,
       requiredResponseApiProperty,
+      outputPath,
       prismaClientImportPath,
       outputApiPropertyType,
       wrapRelationsAsType,

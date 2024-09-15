@@ -1,9 +1,12 @@
+import slash from 'slash';
+import path from 'node:path';
 import type { DMMF } from '@prisma/generator-helper';
 import { isAnnotatedWith, isId, isUnique } from '../field-classifiers';
 import {
   concatIntoArray,
   concatUniqueIntoArray,
   generateUniqueInput,
+  getRelativePath,
   makeImportsFromPrismaClient,
   mapDMMFToParsedField,
   uniq,
@@ -149,6 +152,18 @@ export const computeConnectDtoParams = ({
     if (templateHelpers.config.noDependencies) {
       if (field.type === 'Json') field.type = 'Object';
       else if (field.type === 'Decimal') field.type = 'Float';
+
+      if (field.kind === 'enum') {
+        imports.push({
+          from: slash(
+            `${getRelativePath(
+              model.output.entity,
+              templateHelpers.config.outputPath,
+            )}${path.sep}enums`,
+          ),
+          destruct: [field.type],
+        });
+      }
     }
 
     return mapDMMFToParsedField(field, overrides, decorators);
@@ -157,6 +172,7 @@ export const computeConnectDtoParams = ({
   const importPrismaClient = makeImportsFromPrismaClient(
     fields,
     templateHelpers.config.prismaClientImportPath,
+    !templateHelpers.config.noDependencies,
   );
 
   const importNestjsSwagger = makeImportsFromNestjsSwagger(
