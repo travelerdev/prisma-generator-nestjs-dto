@@ -133,6 +133,7 @@ export function parseApiProperty(
 
   if (incl.enum && field.kind === 'enum') {
     properties.push({ name: 'enum', value: field.type });
+    properties.push({ name: 'enumName', value: field.type });
   }
 
   const defaultValue = getDefaultValue(field);
