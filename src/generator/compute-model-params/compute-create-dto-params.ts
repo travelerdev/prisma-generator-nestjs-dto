@@ -107,6 +107,7 @@ export const computeCreateDtoParams = ({
       if (field.isList) overrides.isRequired = false;
 
       overrides.type = relationInputType.type;
+      overrides.pureType = true;
       // since relation input field types are translated to something like { connect: Foo[] }, the field type itself is not a list anymore.
       // You provide list input in the nested `connect` or `create` properties.
       overrides.isList = false;
@@ -163,7 +164,12 @@ export const computeCreateDtoParams = ({
         );
 
         imports.push({
-          destruct: [importName],
+          destruct: [
+            importName,
+            ...(templateHelpers.config.wrapRelationsAsType
+              ? [`type ${importName} as ${importName}AsType`]
+              : []),
+          ],
           from: importFrom,
         });
       }

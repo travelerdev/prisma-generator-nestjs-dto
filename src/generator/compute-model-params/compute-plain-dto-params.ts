@@ -81,7 +81,12 @@ export const computePlainDtoParams = ({
         );
 
         imports.push({
-          destruct: [importName],
+          destruct: [
+            importName,
+            ...(templateHelpers.config.wrapRelationsAsType
+              ? [`type ${importName} as ${importName}AsType`]
+              : []),
+          ],
           from: importFrom,
         });
       }

@@ -150,6 +150,11 @@ export const generate = async (options: GeneratorOptions) => {
     true,
   );
 
+  const wrapRelationsAsType = stringToBoolean(
+    options.generator.config.wrapRelationsAsType,
+    false,
+  );
+
   const results = run({
     output,
     dmmf: options.dmmf,
@@ -171,6 +176,7 @@ export const generate = async (options: GeneratorOptions) => {
     prismaClientImportPath,
     outputApiPropertyType,
     generateFileTypes,
+    wrapRelationsAsType,
   });
 
   const indexCollections: Record<string, WriteableFileSpecs> = {};

@@ -103,6 +103,7 @@ export const computeUpdateDtoParams = ({
       });
 
       overrides.type = relationInputType.type;
+      overrides.pureType = true;
       overrides.isList = false;
       overrides.isNullable = false;
 
@@ -165,7 +166,12 @@ export const computeUpdateDtoParams = ({
         );
 
         imports.push({
-          destruct: [importName],
+          destruct: [
+            importName,
+            ...(templateHelpers.config.wrapRelationsAsType
+              ? [`type ${importName} as ${importName}AsType`]
+              : []),
+          ],
           from: importFrom,
         });
       }

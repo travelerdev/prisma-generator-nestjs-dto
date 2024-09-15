@@ -104,6 +104,7 @@ interface MakeHelpersParam {
   requiredResponseApiProperty: boolean;
   prismaClientImportPath: string;
   outputApiPropertyType: boolean;
+  wrapRelationsAsType: boolean;
 }
 export const makeHelpers = ({
   connectDtoPrefix,
@@ -121,6 +122,7 @@ export const makeHelpers = ({
   requiredResponseApiProperty,
   prismaClientImportPath,
   outputApiPropertyType,
+  wrapRelationsAsType,
 }: MakeHelpersParam) => {
   const className = (name: string, prefix = '', suffix = '') =>
     `${prefix}${transformClassNameCase(name)}${suffix}`;
@@ -198,9 +200,10 @@ export const makeHelpers = ({
             field.kind === 'relation-input' ||
             field.pureType === true
           ? field.type
-          : field.relationName
-            ? entityName(field.type)
-            : dtoName(field.type, doFullUpdate ? 'create' : dtoType))
+          : (field.relationName
+              ? entityName(field.type)
+              : dtoName(field.type, doFullUpdate ? 'create' : dtoType)) +
+            when(wrapRelationsAsType, 'AsType'))
     }${when(field.isList, '[]')}`;
   };
 
@@ -266,6 +269,7 @@ export const makeHelpers = ({
       requiredResponseApiProperty,
       prismaClientImportPath,
       outputApiPropertyType,
+      wrapRelationsAsType,
     },
     apiExtraModels,
     entityName,

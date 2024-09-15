@@ -483,6 +483,17 @@ export const generateRelationInput = ({
     );
   }
 
+  if (t.config.wrapRelationsAsType) {
+    relationInputClassProps.forEach((prop) => {
+      prop.type += 'AsType';
+    });
+    imports.forEach(({ destruct }) => {
+      if (destruct && destruct[0]) {
+        destruct.push(`type ${destruct[0]} as ${destruct[0]}AsType`);
+      }
+    });
+  }
+
   const originalInputClassName = `${t.transformClassNameCase(
     model.name,
   )}${t.transformClassNameCase(field.name)}RelationInput`;
