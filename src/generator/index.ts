@@ -132,11 +132,13 @@ export const run = ({
 
   const enumFiles: WriteableFileSpecs[] = [];
   if (noDependencies) {
-    logger('Processing enums');
-    enumFiles.push({
-      fileName: path.join(output, 'enums.ts'),
-      content: generateEnums(dmmf.datamodel.enums),
-    });
+    if (dmmf.datamodel.enums.length) {
+      logger('Processing enums');
+      enumFiles.push({
+        fileName: path.join(output, 'enums.ts'),
+        content: generateEnums(dmmf.datamodel.enums),
+      });
+    }
   }
 
   const typeFiles = filteredTypes.map((model) => {
