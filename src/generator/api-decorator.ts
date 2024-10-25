@@ -49,17 +49,17 @@ function getDefaultValue(field: ParsedField): any {
   }
 }
 
-function extractAnnotation(
+export function extractAnnotation(
   field: ParsedField,
   prop: string,
 ): IApiProperty | null {
-  const regexp = new RegExp(`@${prop}\\s+(.+)\\s*$`, 'm');
+  const regexp = new RegExp(`@${prop}\\s+(.+)$`, 'm');
   const matches = regexp.exec(field.documentation || '');
 
   if (matches && matches[1]) {
     return {
       name: prop,
-      value: matches[1],
+      value: matches[1].trim(),
     };
   }
 
@@ -69,10 +69,19 @@ function extractAnnotation(
 /**
  * Wrap string with single-quotes unless it's a (stringified) number, boolean, or array.
  */
-function encapsulateString(value: string): string {
-  return /^$|^(?!true$|false$)[^0-9\[]/.test(value)
-    ? `'${value.replace(/'/g, "\\'")}'`
-    : value;
+export function encapsulateString(value: string): string {
+  // don't quote booleans, numbers, or arrays
+  if (
+    value === 'true' ||
+    value === 'false' ||
+    /^-?\d+(?:\.\d+)?$/.test(value) ||
+    /^\[.*]$/.test(value)
+  ) {
+    return value;
+  }
+
+  // quote everything else
+  return `'${value.replace(/'/g, "\\'")}'`;
 }
 
 /**
