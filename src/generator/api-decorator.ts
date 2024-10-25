@@ -1,5 +1,7 @@
 import { DMMF } from '@prisma/generator-helper';
 import { IApiProperty, ImportStatementParams, ParsedField } from './types';
+import { DTO_API_OVERRIDE_TYPE } from './annotations';
+import { isAnnotatedWith } from './field-classifiers';
 
 const ApiProps = [
   'description',
@@ -110,8 +112,18 @@ export function parseApiProperty(
   }
 
   if (incl.type) {
+    const rawCastType = isAnnotatedWith(field, DTO_API_OVERRIDE_TYPE, {
+      returnAnnotationParameters: true,
+    });
+    const castType = rawCastType ? rawCastType.split(',')[0] : undefined;
     const scalarFormat = PrismaScalarToFormat[field.type];
-    if (scalarFormat) {
+    if (castType) {
+      properties.push({
+        name: 'type',
+        value: castType,
+        noEncapsulation: true,
+      });
+    } else if (scalarFormat) {
       properties.push({
         name: 'type',
         value: scalarFormat.type,

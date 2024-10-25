@@ -2,9 +2,12 @@ import slash from 'slash';
 import path from 'node:path';
 import {
   DTO_API_HIDDEN,
+  DTO_API_OVERRIDE_TYPE,
+  DTO_CAST_TYPE,
   DTO_CREATE_HIDDEN,
   DTO_CREATE_OPTIONAL,
   DTO_CREATE_VALIDATE_IF,
+  DTO_OVERRIDE_TYPE,
   DTO_RELATION_CAN_CONNECT_ON_CREATE,
   DTO_RELATION_CAN_CREATE_ON_CREATE,
   DTO_RELATION_INCLUDE_ID,
@@ -27,6 +30,7 @@ import {
   generateRelationInput,
   getRelationScalars,
   getRelativePath,
+  makeCustomImports,
   makeImportsFromPrismaClient,
   mapDMMFToParsedField,
   zipImportStatementParams,
@@ -150,7 +154,14 @@ export const computeCreateDtoParams = ({
 
     if (isType(field)) {
       // don't try to import the class we're preparing params for
-      if (field.type !== model.name) {
+      if (
+        field.type !== model.name &&
+        !(
+          (isAnnotatedWith(field, DTO_OVERRIDE_TYPE) ||
+            isAnnotatedWith(field, DTO_CAST_TYPE)) &&
+          isAnnotatedWith(field, DTO_API_OVERRIDE_TYPE)
+        )
+      ) {
         const modelToImportFrom = allModels.find(
           ({ name }) => name === field.type,
         );
@@ -259,13 +270,12 @@ export const computeCreateDtoParams = ({
     templateHelpers.config.prismaClientImportPath,
     !templateHelpers.config.noDependencies,
   );
-
   const importNestjsSwagger = makeImportsFromNestjsSwagger(
     fields,
     apiExtraModels,
   );
-
   const importClassValidator = makeImportsFromClassValidator(classValidators);
+  const customImports = makeCustomImports(fields);
 
   return {
     model,
@@ -274,6 +284,7 @@ export const computeCreateDtoParams = ({
       ...importPrismaClient,
       ...importNestjsSwagger,
       ...importClassValidator,
+      ...customImports,
       ...imports,
     ]),
     extraClasses,

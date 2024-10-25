@@ -2,7 +2,10 @@ import path from 'node:path';
 import slash from 'slash';
 import {
   DTO_API_HIDDEN,
+  DTO_API_OVERRIDE_TYPE,
+  DTO_CAST_TYPE,
   DTO_ENTITY_HIDDEN,
+  DTO_OVERRIDE_TYPE,
   DTO_RELATION_REQUIRED,
 } from '../annotations';
 import {
@@ -14,6 +17,7 @@ import {
 import {
   getRelationScalars,
   getRelativePath,
+  makeCustomImports,
   makeImportsFromPrismaClient,
   mapDMMFToParsedField,
   zipImportStatementParams,
@@ -61,7 +65,14 @@ export const computeEntityParams = ({
 
     if (isType(field)) {
       // don't try to import the class we're preparing params for
-      if (field.type !== model.name) {
+      if (
+        field.type !== model.name &&
+        !(
+          (isAnnotatedWith(field, DTO_OVERRIDE_TYPE) ||
+            isAnnotatedWith(field, DTO_CAST_TYPE)) &&
+          isAnnotatedWith(field, DTO_API_OVERRIDE_TYPE)
+        )
+      ) {
         const modelToImportFrom = allModels.find(
           ({ name }) => name === field.type,
         );
@@ -103,7 +114,14 @@ export const computeEntityParams = ({
           : !isAnnotatedWith(field, DTO_RELATION_REQUIRED);
 
       // don't try to import the class we're preparing params for
-      if (field.type !== model.name) {
+      if (
+        field.type !== model.name &&
+        !(
+          (isAnnotatedWith(field, DTO_OVERRIDE_TYPE) ||
+            isAnnotatedWith(field, DTO_CAST_TYPE)) &&
+          isAnnotatedWith(field, DTO_API_OVERRIDE_TYPE)
+        )
+      ) {
         const modelToImportFrom = allModels.find(
           ({ name }) => name === field.type,
         ) as Model | undefined;
@@ -207,11 +225,11 @@ export const computeEntityParams = ({
     templateHelpers.config.prismaClientImportPath,
     !templateHelpers.config.noDependencies,
   );
-
   const importNestjsSwagger = makeImportsFromNestjsSwagger(
     fields,
     apiExtraModels,
   );
+  const customImports = makeCustomImports(fields);
 
   return {
     model,
@@ -219,6 +237,7 @@ export const computeEntityParams = ({
     imports: zipImportStatementParams([
       ...importPrismaClient,
       ...importNestjsSwagger,
+      ...customImports,
       ...imports,
     ]),
     apiExtraModels,

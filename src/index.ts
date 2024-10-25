@@ -4,9 +4,11 @@ import makeDir from 'make-dir';
 import slash from 'slash';
 import { generatorHandler, GeneratorOptions } from '@prisma/generator-helper';
 import prettier from 'prettier';
-import { logger, parseEnvValue } from './utils';
+import { logger, parseEnvValue, warn } from './utils';
 import { run } from './generator';
 import type { WriteableFileSpecs, NamingStyle } from './generator/types';
+import { isAnnotatedWith } from './generator/field-classifiers';
+import { DTO_CAST_TYPE } from './generator/annotations';
 
 const stringToBoolean = (input: string, defaultValue = false) => {
   if (input === 'true') {
@@ -182,6 +184,19 @@ export const generate = async (options: GeneratorOptions) => {
     wrapRelationsAsType,
     showDefaultValues,
   });
+
+  // check for deprecated annotations
+  const deprecatedCastTypeAnnotation = [
+    ...options.dmmf.datamodel.models,
+    ...options.dmmf.datamodel.types,
+  ].some((model) =>
+    model.fields.some((field) => isAnnotatedWith(field, DTO_CAST_TYPE)),
+  );
+  if (deprecatedCastTypeAnnotation) {
+    warn(
+      '@DtoCastType annotation is deprecated. Please use DtoOverrideType instead.',
+    );
+  }
 
   const indexCollections: Record<string, WriteableFileSpecs> = {};
 

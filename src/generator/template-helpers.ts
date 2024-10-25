@@ -2,8 +2,12 @@ import { DMMF } from '@prisma/generator-helper';
 import { ImportStatementParams, ParsedField } from './types';
 import { decorateApiProperty } from './api-decorator';
 import { decorateClassValidators } from './class-validator';
-import { isAnnotatedWith, isScalar, isType } from './field-classifiers';
-import { DTO_CAST_TYPE, DTO_TYPE_FULL_UPDATE } from './annotations';
+import { isAnnotatedWith, isType } from './field-classifiers';
+import {
+  DTO_CAST_TYPE,
+  DTO_OVERRIDE_TYPE,
+  DTO_TYPE_FULL_UPDATE,
+} from './annotations';
 
 const PrismaScalarToTypeScript: Record<string, string> = {
   String: 'string',
@@ -188,11 +192,15 @@ export const makeHelpers = ({
       isType(field as DMMF.Field) &&
       isAnnotatedWith(field as DMMF.Field, DTO_TYPE_FULL_UPDATE);
 
-    const rawCastType =
-      (isType(field as DMMF.Field) || isScalar(field as DMMF.Field)) &&
-      isAnnotatedWith(field as DMMF.Field, DTO_CAST_TYPE, {
-        returnAnnotationParameters: true,
-      });
+    const rawCastType = [DTO_OVERRIDE_TYPE, DTO_CAST_TYPE].reduce(
+      (cast: string | false, annotation) => {
+        if (cast) return cast;
+        return isAnnotatedWith(field, annotation, {
+          returnAnnotationParameters: true,
+        });
+      },
+      false,
+    );
 
     const castType = rawCastType ? rawCastType.split(',')[0] : undefined;
 
