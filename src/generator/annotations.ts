@@ -6,6 +6,7 @@ export const DTO_ENTITY_HIDDEN = /@DtoEntityHidden/;
 export const DTO_CONNECT_HIDDEN = /@DtoConnectHidden/;
 export const DTO_API_HIDDEN = /@DtoApiHidden/;
 export const DTO_CREATE_OPTIONAL = /@DtoCreateOptional/;
+export const DTO_CREATE_REQUIRED = /@DtoCreateRequired/;
 export const DTO_UPDATE_OPTIONAL = /@DtoUpdateOptional/;
 export const DTO_UPDATE_REQUIRED = /@DtoUpdateRequired/;
 export const DTO_RELATION_REQUIRED = /@DtoRelationRequired/;

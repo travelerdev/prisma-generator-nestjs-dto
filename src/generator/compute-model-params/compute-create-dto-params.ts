@@ -6,6 +6,7 @@ import {
   DTO_CAST_TYPE,
   DTO_CREATE_HIDDEN,
   DTO_CREATE_OPTIONAL,
+  DTO_CREATE_REQUIRED,
   DTO_CREATE_VALIDATE_IF,
   DTO_OVERRIDE_TYPE,
   DTO_RELATION_CAN_CONNECT_ON_CREATE,
@@ -150,7 +151,12 @@ export const computeCreateDtoParams = ({
     if (isDtoOptional) {
       overrides.isRequired = false;
     }
-    overrides.isNullable = !field.isRequired;
+
+    if (isAnnotatedWith(field, DTO_CREATE_REQUIRED)) {
+      overrides.isRequired = true;
+    }
+
+    overrides.isNullable = !(field.isRequired || overrides.isRequired);
 
     if (isType(field)) {
       // don't try to import the class we're preparing params for

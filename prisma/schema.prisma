@@ -84,6 +84,7 @@ model Product {
   company Company @relation(fields: [companyId], references: [id])
 
   /// @DtoRelationIncludeId
+  /// @DtoCreateRequired
   photoId String?
   /// @DtoRelationCanDisconnectOnUpdate
   photo   Photo?  @relation(fields: [photoId], references: [id])
