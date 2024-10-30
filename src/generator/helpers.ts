@@ -21,7 +21,7 @@ import type {
 import { parseApiProperty } from './api-decorator';
 import { parseClassValidators } from './class-validator';
 import {
-  DTO_API_OVERRIDE_TYPE,
+  DTO_OVERRIDE_API_PROPERTY_TYPE,
   DTO_CAST_TYPE,
   DTO_OVERRIDE_TYPE,
 } from './annotations';
@@ -77,61 +77,62 @@ export const makeImportsFromPrismaClient = (
 export const makeCustomImports = (
   fields: ParsedField[],
 ): ImportStatementParams[] => {
-  return [[DTO_OVERRIDE_TYPE, DTO_CAST_TYPE], [DTO_API_OVERRIDE_TYPE]].flatMap(
-    (annotations) => {
-      // Walk the fields for any that have a DtoOverrideType/DtoApiOverrideType annotation that
-      // requires a custom import to be appended.
-      return fields.flatMap(({ documentation }) => {
-        // const castType = isAnnotatedWith({ documentation }, DTO_CAST_TYPE, {
-        //   returnAnnotationParameters: true,
-        // });
-        const castType = annotations.reduce(
-          (cast: string | false, annotation) => {
-            if (cast) return cast;
-            return isAnnotatedWith({ documentation }, annotation, {
-              returnAnnotationParameters: true,
-            });
-          },
-          false,
+  return [
+    [DTO_OVERRIDE_TYPE, DTO_CAST_TYPE],
+    [DTO_OVERRIDE_API_PROPERTY_TYPE],
+  ].flatMap((annotations) => {
+    // Walk the fields for any that have a DtoOverrideType/DtoApiOverrideType annotation that
+    // requires a custom import to be appended.
+    return fields.flatMap(({ documentation }) => {
+      // const castType = isAnnotatedWith({ documentation }, DTO_CAST_TYPE, {
+      //   returnAnnotationParameters: true,
+      // });
+      const castType = annotations.reduce(
+        (cast: string | false, annotation) => {
+          if (cast) return cast;
+          return isAnnotatedWith({ documentation }, annotation, {
+            returnAnnotationParameters: true,
+          });
+        },
+        false,
+      );
+      if (!castType || !castType.includes(',')) {
+        return [];
+      }
+
+      const [importAs, importFrom, importWas] = castType
+        .split(',')
+        .map((s) => s.trim());
+
+      if (!importFrom) {
+        throw new Error(
+          "Invalid DTOCastType annotation. Requesting import but did not provide 'from' value.",
         );
-        if (!castType || !castType.includes(',')) {
-          return [];
-        }
+      }
 
-        const [importAs, importFrom, importWas] = castType
-          .split(',')
-          .map((s) => s.trim());
-
-        if (!importFrom) {
-          throw new Error(
-            "Invalid DTOCastType annotation. Requesting import but did not provide 'from' value.",
-          );
-        }
-
-        if (!importWas || importWas === importAs) {
-          return {
-            from: importFrom,
-            destruct: [importAs],
-          };
-        } else if (importWas === 'default') {
-          return {
-            from: importFrom,
-            default: importAs,
-          };
-        } else if (importWas === '*') {
-          return {
-            from: importFrom,
-            default: { '*': importAs },
-          };
-        } else {
-          return {
-            from: importFrom,
-            destruct: [{ [importWas]: importAs }],
-          };
-        }
-      });
-    },
-  );
+      if (!importWas || importWas === importAs) {
+        return {
+          from: importFrom,
+          destruct: [importAs],
+        };
+      } else if (importWas === 'default') {
+        return {
+          from: importFrom,
+          default: importAs,
+        };
+      } else if (importWas === '*') {
+        return {
+          from: importFrom,
+          default: { '*': importAs },
+        };
+      } else {
+        return {
+          from: importFrom,
+          destruct: [{ [importWas]: importAs }],
+        };
+      }
+    });
+  });
 };
 
 export const mapDMMFToParsedField = (
@@ -284,9 +285,13 @@ export const generateRelationInput = ({
     false,
   );
   const castType = rawCastType ? rawCastType.split(',')[0] : undefined;
-  const rawCastApiType = isAnnotatedWith(field, DTO_API_OVERRIDE_TYPE, {
-    returnAnnotationParameters: true,
-  });
+  const rawCastApiType = isAnnotatedWith(
+    field,
+    DTO_OVERRIDE_API_PROPERTY_TYPE,
+    {
+      returnAnnotationParameters: true,
+    },
+  );
   const castApiType = rawCastApiType ? rawCastApiType.split(',')[0] : undefined;
 
   if (createRelation) {
@@ -333,7 +338,7 @@ export const generateRelationInput = ({
       );
       decorators.apiProperties.push({
         name: 'type',
-        value: castApiType || preAndPostfixedName,
+        value: castApiType ? '() => ' + castApiType : preAndPostfixedName,
         noEncapsulation: true,
       });
       if (field.isList)
@@ -391,7 +396,7 @@ export const generateRelationInput = ({
       );
       decorators.apiProperties.push({
         name: 'type',
-        value: castApiType || preAndPostfixedName,
+        value: castApiType ? '() => ' + castApiType : preAndPostfixedName,
         noEncapsulation: true,
       });
       if (field.isList)
@@ -496,7 +501,7 @@ export const generateRelationInput = ({
         );
         decorators.apiProperties.push({
           name: 'type',
-          value: castApiType || preAndPostfixedName,
+          value: castApiType ? '() => ' + castApiType : preAndPostfixedName,
           noEncapsulation: true,
         });
       }

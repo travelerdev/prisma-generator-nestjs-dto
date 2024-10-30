@@ -2,7 +2,7 @@ import slash from 'slash';
 import path from 'node:path';
 import {
   DTO_API_HIDDEN,
-  DTO_API_OVERRIDE_TYPE,
+  DTO_OVERRIDE_API_PROPERTY_TYPE,
   DTO_CAST_TYPE,
   DTO_CREATE_HIDDEN,
   DTO_CREATE_OPTIONAL,
@@ -165,7 +165,7 @@ export const computeCreateDtoParams = ({
         !(
           (isAnnotatedWith(field, DTO_OVERRIDE_TYPE) ||
             isAnnotatedWith(field, DTO_CAST_TYPE)) &&
-          isAnnotatedWith(field, DTO_API_OVERRIDE_TYPE)
+          isAnnotatedWith(field, DTO_OVERRIDE_API_PROPERTY_TYPE)
         )
       ) {
         const modelToImportFrom = allModels.find(

@@ -2,7 +2,7 @@ import path from 'node:path';
 import slash from 'slash';
 import {
   DTO_API_HIDDEN,
-  DTO_API_OVERRIDE_TYPE,
+  DTO_OVERRIDE_API_PROPERTY_TYPE,
   DTO_CAST_TYPE,
   DTO_OVERRIDE_TYPE,
   DTO_RELATION_CAN_CONNECT_ON_UPDATE,
@@ -155,7 +155,7 @@ export const computeUpdateDtoParams = ({
         !(
           (isAnnotatedWith(field, DTO_OVERRIDE_TYPE) ||
             isAnnotatedWith(field, DTO_CAST_TYPE)) &&
-          isAnnotatedWith(field, DTO_API_OVERRIDE_TYPE)
+          isAnnotatedWith(field, DTO_OVERRIDE_API_PROPERTY_TYPE)
         )
       ) {
         const modelToImportFrom = allModels.find(
