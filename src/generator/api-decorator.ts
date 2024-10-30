@@ -71,13 +71,14 @@ export function extractAnnotation(
 }
 
 /**
- * Wrap string with single-quotes unless it's a (stringified) number, boolean, or array.
+ * Wrap string with single-quotes unless it's a (stringified) number, boolean, null, or array.
  */
 export function encapsulateString(value: string): string {
   // don't quote booleans, numbers, or arrays
   if (
     value === 'true' ||
     value === 'false' ||
+    value === 'null' ||
     /^-?\d+(?:\.\d+)?$/.test(value) ||
     /^\[.*]$/.test(value)
   ) {
