@@ -106,12 +106,13 @@ export const computeEntityParams = ({
     // they can however be `selected` and thus might optionally be present in the
     // response from PrismaClient
     if (isRelation(field)) {
-      overrides.isRequired = false;
+      const isRelationRequired = isAnnotatedWith(field, DTO_RELATION_REQUIRED);
+      overrides.isRequired = isRelationRequired;
       overrides.isNullable = field.isList
         ? false
         : field.isRequired
           ? false
-          : !isAnnotatedWith(field, DTO_RELATION_REQUIRED);
+          : !isRelationRequired;
 
       // don't try to import the class we're preparing params for
       if (
@@ -176,10 +177,10 @@ export const computeEntityParams = ({
         decorators.apiProperties = parseApiProperty(
           {
             ...field,
+            ...overrides,
             isRequired: templateHelpers.config.requiredResponseApiProperty
               ? !!overrides.isRequired
               : false,
-            isNullable: !field.isRequired,
           },
           {
             default: false,
