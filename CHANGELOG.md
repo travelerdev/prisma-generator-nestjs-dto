@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.23.3] - 2024-10-26
+
+### Fixed
+
+- fix `IsAlphanumeric` class-validator [#56][pr56]
+- fix ApiProperty annotations: special strings, e.g. date strings, have not been parsed correctly [#58][i58]
+
+## [1.23.2] - 2024-09-30
+
+### Added
+
+- support new decorators introduced in class-validator@0.14.0 [#53][pr53]
+
 ## [1.23.1] - 2024-08-07
 
 ### Fixed
@@ -345,3 +358,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [i42]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/42
 [pr43]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/43
 [i44]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/44
+[pr53]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/53
+[pr56]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/56
+[i58]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/58
