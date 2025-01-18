@@ -112,6 +112,8 @@ model Category {
   updatedAt DateTime  @updatedAt
   /// @DtoRelationCanCreateOnCreate
   /// @DtoRelationCanConnectOnUpdate
+  /// @DtoOverrideType(ProductFoo2, ./product.foo2)
+  /// @DtoOverrideApiPropertyType(ProductFoo3, ./product.foo3)
   product   Product[]
 }
 
