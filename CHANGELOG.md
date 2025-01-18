@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.24.1] - 2025-01-18
+
+### Fixed
+
+- fix type definition for `Decimal` fields, which (de-)serializes `string` values instead of `number` [#63][i63]
+
 ## [1.24.0] - 2025-01-18
 
 ### Added
@@ -386,3 +392,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [i55]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/55
 [pr56]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/56
 [i58]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/58
+[i63]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/63
