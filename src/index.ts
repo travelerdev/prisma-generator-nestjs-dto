@@ -96,13 +96,13 @@ export const generate = async (options: GeneratorOptions) => {
 
   if (classValidation && outputType !== 'class') {
     throw new Error(
-      `To use 'validation' validation decorators, 'outputType' must be 'class'.`,
+      `To use 'classValidation' decorators, 'outputType' must be 'class'.`,
     );
   }
 
   if (classValidation && noDependencies) {
     throw new Error(
-      `To use 'validation' validation decorators, 'noDependencies' cannot be false.`,
+      `To use 'classValidation' decorators, 'noDependencies' cannot be false.`,
     );
   }
 

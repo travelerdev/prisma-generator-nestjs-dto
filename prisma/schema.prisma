@@ -89,6 +89,8 @@ model Product {
   /// @DtoRelationCanDisconnectOnUpdate
   photo   Photo?  @relation(fields: [photoId], references: [id])
 
+  price Decimal
+
   /// @DtoEntityHidden
   /// @DtoCreateOptional
   /// @DtoUpdateOptional
