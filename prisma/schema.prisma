@@ -27,6 +27,7 @@ generator nestjsDto {
   definiteAssignmentAssertion     = "true"
   prettier                        = "true"
   outputApiPropertyType           = "true"
+  wrapRelationsAsType             = "false"
 }
 
 model Product {
@@ -47,9 +48,10 @@ model Product {
   /// @example 12
   reviewCount     Int           @default(0)
   type            ProductType[]
+  /// @DtoCreateOptional
   /// @ArrayNotEmpty
   /// @MinLength(3)
-  tags            String[]
+  tags            String[] @default(["hello"])
   /// @DtoCastType(MyType, my-package)
   attributes      Json?
   /// @DtoCastType(SomeType, ../types, CustomType)
@@ -82,6 +84,7 @@ model Product {
   company Company @relation(fields: [companyId], references: [id])
 
   /// @DtoRelationIncludeId
+  /// @DtoCreateRequired
   photoId String?
   /// @DtoRelationCanDisconnectOnUpdate
   photo   Photo?  @relation(fields: [photoId], references: [id])

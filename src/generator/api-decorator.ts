@@ -1,5 +1,7 @@
 import { DMMF } from '@prisma/generator-helper';
 import { IApiProperty, ImportStatementParams, ParsedField } from './types';
+import { DTO_OVERRIDE_API_PROPERTY_TYPE } from './annotations';
+import { isAnnotatedWith } from './field-classifiers';
 
 const ApiProps = [
   'description',
@@ -34,6 +36,8 @@ export function isAnnotatedWithDoc(field: ParsedField): boolean {
 function getDefaultValue(field: ParsedField): any {
   if (!field.hasDefaultValue) return undefined;
 
+  if (Array.isArray(field.default)) return JSON.stringify(field.default);
+
   switch (typeof field.default) {
     case 'string':
     case 'number':
@@ -67,13 +71,14 @@ export function extractAnnotation(
 }
 
 /**
- * Wrap string with single-quotes unless it's a (stringified) number, boolean, or array.
+ * Wrap string with single-quotes unless it's a (stringified) number, boolean, null, or array.
  */
 export function encapsulateString(value: string): string {
   // don't quote booleans, numbers, or arrays
   if (
     value === 'true' ||
     value === 'false' ||
+    value === 'null' ||
     /^-?\d+(?:\.\d+)?$/.test(value) ||
     /^\[.*]$/.test(value)
   ) {
@@ -117,8 +122,18 @@ export function parseApiProperty(
   }
 
   if (incl.type) {
+    const rawCastType = isAnnotatedWith(field, DTO_OVERRIDE_API_PROPERTY_TYPE, {
+      returnAnnotationParameters: true,
+    });
+    const castType = rawCastType ? rawCastType.split(',')[0] : undefined;
     const scalarFormat = PrismaScalarToFormat[field.type];
-    if (scalarFormat) {
+    if (castType) {
+      properties.push({
+        name: 'type',
+        value: '() => ' + castType,
+        noEncapsulation: true,
+      });
+    } else if (scalarFormat) {
       properties.push({
         name: 'type',
         value: scalarFormat.type,
@@ -140,6 +155,7 @@ export function parseApiProperty(
 
   if (incl.enum && field.kind === 'enum') {
     properties.push({ name: 'enum', value: field.type });
+    properties.push({ name: 'enumName', value: field.type });
   }
 
   const defaultValue = getDefaultValue(field);

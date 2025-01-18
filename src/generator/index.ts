@@ -10,6 +10,7 @@ import { generateCreateDto } from './generate-create-dto';
 import { generateUpdateDto } from './generate-update-dto';
 import { generateEntity } from './generate-entity';
 import { generatePlainDto } from './generate-plain-dto';
+import { generateEnums } from './generate-enums';
 import { DTO_IGNORE_MODEL } from './annotations';
 import { isAnnotatedWith } from './field-classifiers';
 import { NamingStyle, Model, WriteableFileSpecs } from './types';
@@ -35,6 +36,8 @@ interface RunParam {
   prismaClientImportPath: string;
   outputApiPropertyType: boolean;
   generateFileTypes: string;
+  wrapRelationsAsType: boolean;
+  showDefaultValues: boolean;
 }
 
 export const run = ({
@@ -55,6 +58,8 @@ export const run = ({
     prismaClientImportPath,
     outputApiPropertyType,
     generateFileTypes,
+    wrapRelationsAsType,
+    showDefaultValues,
     ...preAndSuffixes
   } = options;
 
@@ -74,9 +79,12 @@ export const run = ({
     outputType,
     noDependencies,
     definiteAssignmentAssertion,
+    outputPath: output,
     prismaClientImportPath,
     requiredResponseApiProperty,
     outputApiPropertyType,
+    wrapRelationsAsType,
+    showDefaultValues,
     ...preAndSuffixes,
   });
   const allModels = dmmf.datamodel.models;
@@ -121,6 +129,17 @@ export const run = ({
           : output,
       },
     }));
+
+  const enumFiles: WriteableFileSpecs[] = [];
+  if (noDependencies) {
+    if (dmmf.datamodel.enums.length) {
+      logger('Processing enums');
+      enumFiles.push({
+        fileName: path.join(output, 'enums.ts'),
+        content: generateEnums(dmmf.datamodel.enums),
+      });
+    }
+  }
 
   const typeFiles = filteredTypes.map((model) => {
     logger(`Processing Type ${model.name}`);
@@ -259,5 +278,5 @@ export const run = ({
     }
   });
 
-  return [...typeFiles, ...modelFiles].flat();
+  return [...typeFiles, ...modelFiles, ...enumFiles].flat();
 };
