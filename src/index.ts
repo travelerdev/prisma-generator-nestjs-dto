@@ -149,6 +149,11 @@ export const generate = async (options: GeneratorOptions) => {
     options.generator.config.outputApiPropertyType,
     true,
   );
+  if (!outputApiPropertyType) {
+    warn(
+      '`outputApiPropertyType = "false"` is deprecated. Please use `wrapRelationsAsType = "true"` instead and report any issues.',
+    );
+  }
 
   const wrapRelationsAsType = stringToBoolean(
     options.generator.config.wrapRelationsAsType,
