@@ -51,7 +51,7 @@ model Product {
   /// @DtoCreateOptional
   /// @ArrayNotEmpty
   /// @MinLength(3)
-  tags            String[] @default(["hello"])
+  tags            String[]      @default(["hello"])
   /// @DtoCastType(MyType, my-package)
   attributes      Json?
   /// @DtoCastType(SomeType, ../types, CustomType)
@@ -129,6 +129,7 @@ model Company {
 
 model Photo {
   id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  file    Bytes
   product Product[]
 }
 

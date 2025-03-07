@@ -25,6 +25,7 @@ const PrismaScalarToFormat: Record<string, { type: string; format?: string }> =
     Float: { type: 'number', format: 'float' },
     Decimal: { type: 'string', format: 'Decimal.js' },
     DateTime: { type: 'string', format: 'date-time' },
+    Bytes: { type: 'string', format: 'binary' },
   };
 
 export function isAnnotatedWithDoc(field: ParsedField): boolean {
