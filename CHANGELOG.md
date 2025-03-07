@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.25.0] - 2025-03-07
+
+### Added
+
+- add `@DtoRelationCanUpdateOnUpdate` for "-to-one" relations [#32][i32]
+
+### Fixed
+
+- fix `@ApiProperty` type for `Bytes` field [#64][i64]
+- fix `nullable` in `@ApiProperty` should not be set in ConnectDto 
+
 ## [1.24.1] - 2025-01-18
 
 ### Fixed
@@ -374,6 +385,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [i31]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/31
 [pr27]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/27
 [i28]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/28
+[i32]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/32
 [i34]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/34
 [pr36]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/36
 [i37]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/37
@@ -393,3 +405,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [pr56]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/56
 [i58]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/58
 [i63]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/63
+[i64]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/64
