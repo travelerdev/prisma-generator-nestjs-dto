@@ -82,7 +82,7 @@ export const computeConnectDtoParams = ({
   const uniqueFields = uniq([...idFields, ...isUniqueFields]);
   const overrides =
     uniqueFields.length + uniqueCompounds.length > 1
-      ? { isRequired: false }
+      ? { isRequired: false, isNullable: false }
       : {};
 
   uniqueCompounds.forEach((compound) => {

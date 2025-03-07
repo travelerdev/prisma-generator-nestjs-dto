@@ -103,6 +103,7 @@ model Product {
 
   bikeId String?
   /// @DtoRelationCanConnectOnCreate
+  /// @DtoRelationCanUpdateOnUpdate
   bike   Bike?   @relation(fields: [bikeId], references: [id])
 
   @@map("products")
