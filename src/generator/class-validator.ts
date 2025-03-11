@@ -236,6 +236,13 @@ export function parseClassValidators(
           : castType || field.type
       }`,
     });
+  } else if (field.kind === 'enum') {
+    const enumValidator: IClassValidator = {
+      name: 'IsEnum',
+      value: field.type,
+    };
+    optEach(enumValidator, field.isList);
+    validators.push(enumValidator);
   } else {
     const typeValidator = scalarToValidator(field.type);
     if (typeValidator) {
