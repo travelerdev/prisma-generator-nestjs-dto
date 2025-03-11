@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.25.1] - 2025-03-11
+
+### Fixed
+
+- fix missing `@IsEnum()` validator [#65][i65]
+
 ## [1.25.0] - 2025-03-07
 
 ### Added
@@ -406,3 +412,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [i58]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/58
 [i63]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/63
 [i64]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/64
+[i65]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/65
