@@ -10,6 +10,7 @@ generator nestjsDto {
   flatResourceStructure           = "true"
   exportRelationModifierClasses   = "true"
   reExport                        = "true"
+  generateFileTypes               = "dto"
   createDtoPrefix                 = "Create"
   updateDtoPrefix                 = "Update"
   dtoSuffix                       = "Dto"
@@ -19,6 +20,7 @@ generator nestjsDto {
   classValidation                 = "true"
   noDependencies                  = "false"
   outputType                      = "class"
+  prettier                        = "true"
   requiredResponseApiProperty     = "false"
 }
 
@@ -47,4 +49,6 @@ type Photo {
 type File {
   path     String
   mimeType String
+  /// @DtoCastType(number[][][])
+  nested   Json
 }

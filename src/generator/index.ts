@@ -10,6 +10,7 @@ import { generateCreateDto } from './generate-create-dto';
 import { generateUpdateDto } from './generate-update-dto';
 import { generateEntity } from './generate-entity';
 import { generatePlainDto } from './generate-plain-dto';
+import { generateEnums } from './generate-enums';
 import { DTO_IGNORE_MODEL } from './annotations';
 import { isAnnotatedWith } from './field-classifiers';
 import { NamingStyle, Model, WriteableFileSpecs } from './types';
@@ -33,6 +34,10 @@ interface RunParam {
   definiteAssignmentAssertion: boolean;
   requiredResponseApiProperty: boolean;
   prismaClientImportPath: string;
+  outputApiPropertyType: boolean;
+  generateFileTypes: string;
+  wrapRelationsAsType: boolean;
+  showDefaultValues: boolean;
 }
 
 export const run = ({
@@ -51,6 +56,10 @@ export const run = ({
     definiteAssignmentAssertion,
     requiredResponseApiProperty,
     prismaClientImportPath,
+    outputApiPropertyType,
+    generateFileTypes,
+    wrapRelationsAsType,
+    showDefaultValues,
     ...preAndSuffixes
   } = options;
 
@@ -70,8 +79,12 @@ export const run = ({
     outputType,
     noDependencies,
     definiteAssignmentAssertion,
+    outputPath: output,
     prismaClientImportPath,
     requiredResponseApiProperty,
+    outputApiPropertyType,
+    wrapRelationsAsType,
+    showDefaultValues,
     ...preAndSuffixes,
   });
   const allModels = dmmf.datamodel.models;
@@ -89,6 +102,12 @@ export const run = ({
         entity: '',
       },
     }));
+
+  if (generateFileTypes === 'entity' && filteredTypes.length) {
+    throw new Error(
+      `Generating only Entity files while having complex types is not possible. Set 'generateFileTypes' to 'all' or 'dto'.`,
+    );
+  }
 
   const filteredModels: Model[] = allModels
     .filter((model) => !isAnnotatedWith(model, DTO_IGNORE_MODEL))
@@ -110,6 +129,17 @@ export const run = ({
           : output,
       },
     }));
+
+  const enumFiles: WriteableFileSpecs[] = [];
+  if (noDependencies) {
+    if (dmmf.datamodel.enums.length) {
+      logger('Processing enums');
+      enumFiles.push({
+        fileName: path.join(output, 'enums.ts'),
+        content: generateEnums(dmmf.datamodel.enums),
+      });
+    }
+  }
 
   const typeFiles = filteredTypes.map((model) => {
     logger(`Processing Type ${model.name}`);
@@ -236,8 +266,17 @@ export const run = ({
       }),
     };
 
-    return [connectDto, createDto, updateDto, entity, plainDto];
+    switch (generateFileTypes) {
+      case 'all':
+        return [connectDto, createDto, updateDto, entity, plainDto];
+      case 'dto':
+        return [connectDto, createDto, updateDto, plainDto];
+      case 'entity':
+        return [entity];
+      default:
+        throw new Error(`Unknown 'generateFileTypes' value.`);
+    }
   });
 
-  return [...typeFiles, ...modelFiles].flat();
+  return [...typeFiles, ...modelFiles, ...enumFiles].flat();
 };

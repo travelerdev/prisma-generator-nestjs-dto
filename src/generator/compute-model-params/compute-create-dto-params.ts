@@ -2,11 +2,15 @@ import slash from 'slash';
 import path from 'node:path';
 import {
   DTO_API_HIDDEN,
+  DTO_OVERRIDE_API_PROPERTY_TYPE,
+  DTO_CAST_TYPE,
   DTO_CREATE_HIDDEN,
   DTO_CREATE_OPTIONAL,
+  DTO_CREATE_REQUIRED,
+  DTO_CREATE_VALIDATE_IF,
+  DTO_OVERRIDE_TYPE,
   DTO_RELATION_CAN_CONNECT_ON_CREATE,
   DTO_RELATION_CAN_CREATE_ON_CREATE,
-  DTO_RELATION_CAN_DISCONNECT_ON_UPDATE,
   DTO_RELATION_INCLUDE_ID,
   DTO_RELATION_MODIFIERS_ON_CREATE,
   DTO_RELATION_REQUIRED,
@@ -27,6 +31,7 @@ import {
   generateRelationInput,
   getRelationScalars,
   getRelativePath,
+  makeCustomImports,
   makeImportsFromPrismaClient,
   mapDMMFToParsedField,
   zipImportStatementParams,
@@ -46,7 +51,10 @@ import {
   makeImportsFromNestjsSwagger,
   parseApiProperty,
 } from '../api-decorator';
-import { parseClassValidators } from '../class-validator';
+import {
+  makeImportsFromClassValidator,
+  parseClassValidators,
+} from '../class-validator';
 
 interface ComputeCreateDtoParamsParam {
   model: Model;
@@ -104,6 +112,7 @@ export const computeCreateDtoParams = ({
       if (field.isList) overrides.isRequired = false;
 
       overrides.type = relationInputType.type;
+      overrides.pureType = true;
       // since relation input field types are translated to something like { connect: Foo[] }, the field type itself is not a list anymore.
       // You provide list input in the nested `connect` or `create` properties.
       overrides.isList = false;
@@ -133,7 +142,11 @@ export const computeCreateDtoParams = ({
     if (!isDtoOptional) {
       if (isIdWithDefaultValue(field)) return result;
       if (isUpdatedAt(field)) return result;
-      if (isRequiredWithDefaultValue(field)) return result;
+      if (isRequiredWithDefaultValue(field)) {
+        if (templateHelpers.config.showDefaultValues)
+          overrides.isRequired = false;
+        else return result;
+      }
     }
     if (isDtoOptional) {
       overrides.isRequired = false;
@@ -142,9 +155,22 @@ export const computeCreateDtoParams = ({
       overrides.isNullable = true;
     }
 
+    if (isAnnotatedWith(field, DTO_CREATE_REQUIRED)) {
+      overrides.isRequired = true;
+    }
+
+    overrides.isNullable = !(field.isRequired || overrides.isRequired);
+
     if (isType(field)) {
       // don't try to import the class we're preparing params for
-      if (field.type !== model.name) {
+      if (
+        field.type !== model.name &&
+        !(
+          (isAnnotatedWith(field, DTO_OVERRIDE_TYPE) ||
+            isAnnotatedWith(field, DTO_CAST_TYPE)) &&
+          isAnnotatedWith(field, DTO_OVERRIDE_API_PROPERTY_TYPE)
+        )
+      ) {
         const modelToImportFrom = allModels.find(
           ({ name }) => name === field.type,
         );
@@ -161,25 +187,24 @@ export const computeCreateDtoParams = ({
           }${templateHelpers.createDtoFilename(field.type)}`,
         );
 
-        // don't double-import the same thing
-        // TODO should check for match on any import name ( - no matter where from)
-        if (
-          !imports.some(
-            (item) =>
-              Array.isArray(item.destruct) &&
-              item.destruct.includes(importName) &&
-              item.from === importFrom,
-          )
-        ) {
-          imports.push({
-            destruct: [importName],
-            from: importFrom,
-          });
-        }
+        imports.push({
+          destruct: [
+            importName,
+            ...(templateHelpers.config.wrapRelationsAsType
+              ? [`type ${importName} as ${importName}AsType`]
+              : []),
+          ],
+          from: importFrom,
+        });
       }
     }
 
     if (templateHelpers.config.classValidation) {
+      if (isAnnotatedWith(field, DTO_CREATE_VALIDATE_IF)) {
+        overrides.documentation = (
+          overrides.documentation ?? field.documentation
+        )?.replace(DTO_CREATE_VALIDATE_IF, '@ValidateIf');
+      }
       decorators.classValidators = parseClassValidators(
         {
           ...field,
@@ -198,10 +223,20 @@ export const computeCreateDtoParams = ({
       if (isAnnotatedWith(field, DTO_API_HIDDEN)) {
         decorators.apiHideProperty = true;
       } else {
-        decorators.apiProperties = parseApiProperty(field, {
-          type: !overrides.type,
-        });
-        if (overrides.type)
+        // If outputApiPropertyType is false, make sure to set includeType false, otherwise use negated overrides.type
+        const includeType = templateHelpers.config.outputApiPropertyType
+          ? !overrides.type
+          : false;
+        decorators.apiProperties = parseApiProperty(
+          {
+            ...field,
+            ...overrides,
+          },
+          {
+            type: includeType,
+          },
+        );
+        if (overrides.type && templateHelpers.config.outputApiPropertyType)
           decorators.apiProperties.push({
             name: 'type',
             value: overrides.type,
@@ -221,37 +256,35 @@ export const computeCreateDtoParams = ({
 
     if (templateHelpers.config.noDependencies) {
       if (field.type === 'Json') field.type = 'Object';
-      else if (field.type === 'Decimal') field.type = 'Float';
+      else if (field.type === 'Decimal') field.type = 'String';
+
+      if (field.kind === 'enum') {
+        imports.push({
+          from: slash(
+            `${getRelativePath(
+              model.output.entity,
+              templateHelpers.config.outputPath,
+            )}${path.sep}enums`,
+          ),
+          destruct: [field.type],
+        });
+      }
     }
 
     return [...result, mapDMMFToParsedField(field, overrides, decorators)];
   }, [] as ParsedField[]);
 
-  if (classValidators.length) {
-    if (classValidators.find((cv) => cv.name === 'Type')) {
-      imports.unshift({
-        from: 'class-transformer',
-        destruct: ['Type'],
-      });
-    }
-    imports.unshift({
-      from: 'class-validator',
-      destruct: classValidators
-        .filter((cv) => cv.name !== 'Type')
-        .map((v) => v.name)
-        .sort(),
-    });
-  }
-
   const importPrismaClient = makeImportsFromPrismaClient(
     fields,
     templateHelpers.config.prismaClientImportPath,
+    !templateHelpers.config.noDependencies,
   );
-
   const importNestjsSwagger = makeImportsFromNestjsSwagger(
     fields,
     apiExtraModels,
   );
+  const importClassValidator = makeImportsFromClassValidator(classValidators);
+  const customImports = makeCustomImports(fields);
 
   return {
     model,
@@ -259,6 +292,8 @@ export const computeCreateDtoParams = ({
     imports: zipImportStatementParams([
       ...importPrismaClient,
       ...importNestjsSwagger,
+      ...importClassValidator,
+      ...customImports,
       ...imports,
     ]),
     extraClasses,

@@ -14,6 +14,7 @@ generator nestjsDto {
   flatResourceStructure           = "true"
   exportRelationModifierClasses   = "true"
   reExport                        = "true"
+  generateFileTypes               = "all"
   createDtoPrefix                 = "Create"
   updateDtoPrefix                 = "Update"
   dtoSuffix                       = "Dto"
@@ -25,6 +26,8 @@ generator nestjsDto {
   outputType                      = "class"
   definiteAssignmentAssertion     = "true"
   prettier                        = "true"
+  outputApiPropertyType           = "true"
+  wrapRelationsAsType             = "false"
 }
 
 model Product {
@@ -33,6 +36,7 @@ model Product {
   /// @Contains('Product')
   /// @description Project's name
   /// @example My first product
+  /// @DtoUpdateRequired
   name            String        @db.VarChar(255)
   description     String        @db.VarChar(1024)
   /// @maxItems 5
@@ -44,9 +48,10 @@ model Product {
   /// @example 12
   reviewCount     Int           @default(0)
   type            ProductType[]
+  /// @DtoCreateOptional
   /// @ArrayNotEmpty
   /// @MinLength(3)
-  tags            String[]
+  tags            String[]      @default(["hello"])
   /// @DtoCastType(MyType, my-package)
   attributes      Json?
   /// @DtoCastType(SomeType, ../types, CustomType)
@@ -55,6 +60,7 @@ model Product {
   otherAttributes Json
   /// @DtoCastType(OtherType, other-package, default)
   finalAttributes Json?
+  optAttributes   Json?
   /// @DtoUpdateHidden
   score           Float?
   /// @DtoCreateHidden
@@ -78,9 +84,12 @@ model Product {
   company Company @relation(fields: [companyId], references: [id])
 
   /// @DtoRelationIncludeId
+  /// @DtoCreateRequired
   photoId String?
   /// @DtoRelationCanDisconnectOnUpdate
   photo   Photo?  @relation(fields: [photoId], references: [id])
+
+  price Decimal
 
   /// @DtoEntityHidden
   /// @DtoCreateOptional
@@ -94,6 +103,7 @@ model Product {
 
   bikeId String?
   /// @DtoRelationCanConnectOnCreate
+  /// @DtoRelationCanUpdateOnUpdate
   bike   Bike?   @relation(fields: [bikeId], references: [id])
 
   @@map("products")
@@ -105,6 +115,8 @@ model Category {
   updatedAt DateTime  @updatedAt
   /// @DtoRelationCanCreateOnCreate
   /// @DtoRelationCanConnectOnUpdate
+  /// @DtoOverrideType(ProductFoo2, ./product.foo2)
+  /// @DtoOverrideApiPropertyType(ProductFoo3, ./product.foo3)
   product   Product[]
 }
 
@@ -118,6 +130,7 @@ model Company {
 
 model Photo {
   id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  file    Bytes
   product Product[]
 }
 
@@ -165,4 +178,22 @@ model Bike {
   products       Product[]
 
   @@unique([vendor, chassis_number], map: "My_Bike_Unique")
+}
+
+model Post {
+  id String @id
+
+  /// @DtoConnectHidden
+  otherProperty String @unique
+
+  /// @ValidateIf(o => o.otherProperty === 'value')
+  general String
+
+  /// @DtoCreateValidateIf(o => o.otherProperty)
+  /// @IsNotEmpty()
+  exampleCreate String
+
+  /// @DtoUpdateValidateIf(o => o.otherProperty === 'someValue')
+  /// @Contains('something')
+  exampleUpdate String
 }

@@ -1,15 +1,21 @@
-import slash from 'slash';
 import path from 'node:path';
+import slash from 'slash';
 import {
   DTO_API_HIDDEN,
+  DTO_OVERRIDE_API_PROPERTY_TYPE,
+  DTO_CAST_TYPE,
+  DTO_OVERRIDE_TYPE,
   DTO_RELATION_CAN_CONNECT_ON_UPDATE,
   DTO_RELATION_CAN_CREATE_ON_UPDATE,
+  DTO_RELATION_CAN_UPDATE_ON_UPDATE,
   DTO_RELATION_CAN_DISCONNECT_ON_UPDATE,
   DTO_RELATION_INCLUDE_ID,
   DTO_RELATION_MODIFIERS_ON_UPDATE,
   DTO_TYPE_FULL_UPDATE,
   DTO_UPDATE_HIDDEN,
   DTO_UPDATE_OPTIONAL,
+  DTO_UPDATE_REQUIRED,
+  DTO_UPDATE_VALIDATE_IF,
 } from '../annotations';
 import {
   isAnnotatedWith,
@@ -27,26 +33,30 @@ import {
   generateRelationInput,
   getRelationScalars,
   getRelativePath,
+  makeCustomImports,
   makeImportsFromPrismaClient,
   mapDMMFToParsedField,
   zipImportStatementParams,
 } from '../helpers';
 
 import type { DMMF } from '@prisma/generator-helper';
-import type { TemplateHelpers } from '../template-helpers';
-import type {
-  Model,
-  UpdateDtoParams,
-  ImportStatementParams,
-  ParsedField,
-  IDecorators,
-  IClassValidator,
-} from '../types';
 import {
   makeImportsFromNestjsSwagger,
   parseApiProperty,
 } from '../api-decorator';
-import { parseClassValidators } from '../class-validator';
+import {
+  makeImportsFromClassValidator,
+  parseClassValidators,
+} from '../class-validator';
+import type { TemplateHelpers } from '../template-helpers';
+import type {
+  IClassValidator,
+  IDecorators,
+  ImportStatementParams,
+  Model,
+  ParsedField,
+  UpdateDtoParams,
+} from '../types';
 
 interface ComputeUpdateDtoParamsParam {
   model: Model;
@@ -94,10 +104,12 @@ export const computeUpdateDtoParams = ({
         preAndSuffixClassName: templateHelpers.updateDtoName,
         canCreateAnnotation: DTO_RELATION_CAN_CREATE_ON_UPDATE,
         canConnectAnnotation: DTO_RELATION_CAN_CONNECT_ON_UPDATE,
+        canUpdateAnnotation: DTO_RELATION_CAN_UPDATE_ON_UPDATE,
         canDisconnectAnnotation: DTO_RELATION_CAN_DISCONNECT_ON_UPDATE,
       });
 
       overrides.type = relationInputType.type;
+      overrides.pureType = true;
       overrides.isList = false;
       overrides.isNullable = false;
 
@@ -127,12 +139,27 @@ export const computeUpdateDtoParams = ({
     if (!isDtoOptional) {
       if (isId(field)) return result;
       if (isUpdatedAt(field)) return result;
-      if (isRequiredWithDefaultValue(field)) return result;
+      if (isRequiredWithDefaultValue(field)) {
+        if (templateHelpers.config.showDefaultValues)
+          overrides.isRequired = false;
+        else return result;
+      }
+    }
+
+    if (isAnnotatedWith(field, DTO_UPDATE_REQUIRED)) {
+      overrides.isRequired = true;
     }
 
     if (isType(field)) {
       // don't try to import the class we're preparing params for
-      if (field.type !== model.name) {
+      if (
+        field.type !== model.name &&
+        !(
+          (isAnnotatedWith(field, DTO_OVERRIDE_TYPE) ||
+            isAnnotatedWith(field, DTO_CAST_TYPE)) &&
+          isAnnotatedWith(field, DTO_OVERRIDE_API_PROPERTY_TYPE)
+        )
+      ) {
         const modelToImportFrom = allModels.find(
           ({ name }) => name === field.type,
         );
@@ -155,25 +182,24 @@ export const computeUpdateDtoParams = ({
           }`,
         );
 
-        // don't double-import the same thing
-        // TODO should check for match on any import name ( - no matter where from)
-        if (
-          !imports.some(
-            (item) =>
-              Array.isArray(item.destruct) &&
-              item.destruct.includes(importName) &&
-              item.from === importFrom,
-          )
-        ) {
-          imports.push({
-            destruct: [importName],
-            from: importFrom,
-          });
-        }
+        imports.push({
+          destruct: [
+            importName,
+            ...(templateHelpers.config.wrapRelationsAsType
+              ? [`type ${importName} as ${importName}AsType`]
+              : []),
+          ],
+          from: importFrom,
+        });
       }
     }
 
     if (templateHelpers.config.classValidation) {
+      if (isAnnotatedWith(field, DTO_UPDATE_VALIDATE_IF)) {
+        overrides.documentation = (
+          overrides.documentation ?? field.documentation
+        )?.replace(DTO_UPDATE_VALIDATE_IF, '@ValidateIf');
+      }
       decorators.classValidators = parseClassValidators(
         {
           ...field,
@@ -195,6 +221,10 @@ export const computeUpdateDtoParams = ({
       if (isAnnotatedWith(field, DTO_API_HIDDEN)) {
         decorators.apiHideProperty = true;
       } else {
+        // If outputApiPropertyType is false, make sure to set includeType false, otherwise use negated overrides.type
+        const includeType = templateHelpers.config.outputApiPropertyType
+          ? !overrides.type
+          : false;
         decorators.apiProperties = parseApiProperty(
           {
             ...field,
@@ -202,10 +232,10 @@ export const computeUpdateDtoParams = ({
             isNullable: !field.isRequired,
           },
           {
-            type: !overrides.type,
+            type: includeType,
           },
         );
-        if (overrides.type)
+        if (overrides.type && templateHelpers.config.outputApiPropertyType)
           decorators.apiProperties.push({
             name: 'type',
             value: overrides.type,
@@ -220,44 +250,42 @@ export const computeUpdateDtoParams = ({
             (field.type === 'Json'
               ? 'Object'
               : doFullUpdate
-              ? templateHelpers.createDtoName(typeProperty.value)
-              : templateHelpers.updateDtoName(typeProperty.value));
+                ? templateHelpers.createDtoName(typeProperty.value)
+                : templateHelpers.updateDtoName(typeProperty.value));
       }
     }
 
     if (templateHelpers.config.noDependencies) {
       if (field.type === 'Json') field.type = 'Object';
-      else if (field.type === 'Decimal') field.type = 'Float';
+      else if (field.type === 'Decimal') field.type = 'String';
+
+      if (field.kind === 'enum') {
+        imports.push({
+          from: slash(
+            `${getRelativePath(
+              model.output.entity,
+              templateHelpers.config.outputPath,
+            )}${path.sep}enums`,
+          ),
+          destruct: [field.type],
+        });
+      }
     }
 
     return [...result, mapDMMFToParsedField(field, overrides, decorators)];
   }, [] as ParsedField[]);
 
-  if (classValidators.length) {
-    if (classValidators.find((cv) => cv.name === 'Type')) {
-      imports.unshift({
-        from: 'class-transformer',
-        destruct: ['Type'],
-      });
-    }
-    imports.unshift({
-      from: 'class-validator',
-      destruct: classValidators
-        .filter((cv) => cv.name !== 'Type')
-        .map((v) => v.name)
-        .sort(),
-    });
-  }
-
   const importPrismaClient = makeImportsFromPrismaClient(
     fields,
     templateHelpers.config.prismaClientImportPath,
+    !templateHelpers.config.noDependencies,
   );
-
   const importNestjsSwagger = makeImportsFromNestjsSwagger(
     fields,
     apiExtraModels,
   );
+  const importClassValidator = makeImportsFromClassValidator(classValidators);
+  const customImports = makeCustomImports(fields);
 
   return {
     model,
@@ -265,6 +293,8 @@ export const computeUpdateDtoParams = ({
     imports: zipImportStatementParams([
       ...importPrismaClient,
       ...importNestjsSwagger,
+      ...importClassValidator,
+      ...customImports,
       ...imports,
     ]),
     extraClasses,

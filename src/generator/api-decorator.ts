@@ -1,5 +1,7 @@
 import { DMMF } from '@prisma/generator-helper';
 import { IApiProperty, ImportStatementParams, ParsedField } from './types';
+import { DTO_OVERRIDE_API_PROPERTY_TYPE } from './annotations';
+import { isAnnotatedWith } from './field-classifiers';
 
 const ApiProps = [
   'description',
@@ -21,8 +23,9 @@ const PrismaScalarToFormat: Record<string, { type: string; format?: string }> =
     Int: { type: 'integer', format: 'int32' },
     BigInt: { type: 'integer', format: 'int64' },
     Float: { type: 'number', format: 'float' },
-    Decimal: { type: 'number', format: 'double' },
+    Decimal: { type: 'string', format: 'Decimal.js' },
     DateTime: { type: 'string', format: 'date-time' },
+    Bytes: { type: 'string', format: 'binary' },
   };
 
 export function isAnnotatedWithDoc(field: ParsedField): boolean {
@@ -33,6 +36,8 @@ export function isAnnotatedWithDoc(field: ParsedField): boolean {
 
 function getDefaultValue(field: ParsedField): any {
   if (!field.hasDefaultValue) return undefined;
+
+  if (Array.isArray(field.default)) return JSON.stringify(field.default);
 
   switch (typeof field.default) {
     case 'string':
@@ -49,17 +54,17 @@ function getDefaultValue(field: ParsedField): any {
   }
 }
 
-function extractAnnotation(
+export function extractAnnotation(
   field: ParsedField,
   prop: string,
 ): IApiProperty | null {
-  const regexp = new RegExp(`@${prop}\\s+(.+)\\s*$`, 'm');
+  const regexp = new RegExp(`@${prop}\\s+(.+)$`, 'm');
   const matches = regexp.exec(field.documentation || '');
 
   if (matches && matches[1]) {
     return {
       name: prop,
-      value: matches[1],
+      value: matches[1].trim(),
     };
   }
 
@@ -67,12 +72,22 @@ function extractAnnotation(
 }
 
 /**
- * Wrap string with single-quotes unless it's a (stringified) number, boolean, or array.
+ * Wrap string with single-quotes unless it's a (stringified) number, boolean, null, or array.
  */
-function encapsulateString(value: string): string {
-  return /^$|^(?!true$|false$)[^0-9\[]/.test(value)
-    ? `'${value.replace(/'/g, "\\'")}'`
-    : value;
+export function encapsulateString(value: string): string {
+  // don't quote booleans, numbers, or arrays
+  if (
+    value === 'true' ||
+    value === 'false' ||
+    value === 'null' ||
+    /^-?\d+(?:\.\d+)?$/.test(value) ||
+    /^\[.*]$/.test(value)
+  ) {
+    return value;
+  }
+
+  // quote everything else
+  return `'${value.replace(/'/g, "\\'")}'`;
 }
 
 /**
@@ -108,34 +123,40 @@ export function parseApiProperty(
   }
 
   if (incl.type) {
+    const rawCastType = isAnnotatedWith(field, DTO_OVERRIDE_API_PROPERTY_TYPE, {
+      returnAnnotationParameters: true,
+    });
+    const castType = rawCastType ? rawCastType.split(',')[0] : undefined;
     const scalarFormat = PrismaScalarToFormat[field.type];
-    if (field.isList) {
-      if (scalarFormat) {
-        properties.push({
-          name: 'type',
-          value: scalarFormat.type,
-        });
-        if (scalarFormat.format) {
-          properties.push({ name: 'format', value: scalarFormat.format });
-        }
-      } else if (field.kind !== 'enum') {
-        properties.push({
-          name: 'type',
-          value: field.type,
-          noEncapsulation: true,
-        });
+    if (castType) {
+      properties.push({
+        name: 'type',
+        value: '() => ' + castType,
+        noEncapsulation: true,
+      });
+    } else if (scalarFormat) {
+      properties.push({
+        name: 'type',
+        value: scalarFormat.type,
+      });
+      if (scalarFormat.format) {
+        properties.push({ name: 'format', value: scalarFormat.format });
       }
+    } else if (field.kind !== 'enum') {
+      properties.push({
+        name: 'type',
+        value: field.type,
+        noEncapsulation: true,
+      });
+    }
+    if (field.isList) {
       properties.push({ name: 'isArray', value: 'true' });
-    } else if (scalarFormat?.format) {
-      properties.push(
-        { name: 'type', value: scalarFormat.type },
-        { name: 'format', value: scalarFormat.format },
-      );
     }
   }
 
   if (incl.enum && field.kind === 'enum') {
     properties.push({ name: 'enum', value: field.type });
+    properties.push({ name: 'enumName', value: field.type });
   }
 
   const defaultValue = getDefaultValue(field);

@@ -5,6 +5,145 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.25.1] - 2025-03-11
+
+### Fixed
+
+- fix missing `@IsEnum()` validator [#65][i65]
+
+## [1.25.0] - 2025-03-07
+
+### Added
+
+- add `@DtoRelationCanUpdateOnUpdate` for "-to-one" relations [#32][i32]
+
+### Fixed
+
+- fix `@ApiProperty` type for `Bytes` field [#64][i64]
+- fix `nullable` in `@ApiProperty` should not be set in ConnectDto 
+
+## [1.24.1] - 2025-01-18
+
+### Fixed
+
+- fix type definition for `Decimal` fields, which (de-)serializes `string` values instead of `number` [#63][i63]
+
+## [1.24.0] - 2025-01-18
+
+### Added
+
+- add `wrapRelationsAsType = "true"` to import relation dependencies as types to solve circular reference issues with SWC [#39][i39] [#49][i49], making `outputApiPropertyType = "false"` obsolete (deprecated)
+- new flag `showDefaultValues = "true"` makes fields with `@default` attribute visible by default [#51][i51]
+- add enumName to ApiProperty [#52][i52]
+- add `@DtoCreateRequired` that marks field **required** in `CreateDTO` that is otherwise optional (equivalent to `@DtoUpdateRequired`) [#55][i55]
+
+### Changed
+
+- deprecate `@DtoCastType` in favor of `@DtoOverrideType` and `@DtoOverrideApiPropertyType` to control type casting for both property type and type of ApiProperty decorator separately [#54][i54]
+
+### Fixed
+
+- fix ApiProperty default value if field is a list
+- generate enums if `noDependencies = true`, i.e. no dependency `@prisma/client` [#48][i48]
+- fix `@DtoRelationRequired` still marking property as optional [#54][i54]
+
+## [1.23.3] - 2024-10-26
+
+### Fixed
+
+- fix `IsAlphanumeric` class-validator [#56][pr56]
+- fix ApiProperty annotations: special strings, e.g. date strings, have not been parsed correctly [#58][i58]
+
+## [1.23.2] - 2024-09-30
+
+### Added
+
+- support new decorators introduced in class-validator@0.14.0 [#53][pr53]
+
+## [1.23.1] - 2024-08-07
+
+### Fixed
+
+- fix `nullable` in `@ApiProperty` for fields with default value in CreateDto
+
+## [1.23.0] - 2024-07-31
+
+### Added
+
+- add `outputApiPropertyType` flag to solve issues with SWC [#39][i39] (thanks to [KoenLemmen](https://github.com/KoenLemmen))
+- add `generateFileTypes` config to generate only DTO files, only Entity files, or both [#42][i42]
+
+### Fixed
+
+- fix wrong class-validator decorator on disconnect property [#44][i44] 
+
+## [1.22.0] - 2024-05-31
+
+### Added
+
+- add `@DtoUpdateRequired` annotation [#40][i40] (thanks to [KoenLemmen](https://github.com/KoenLemmen))
+
+### Fixed
+
+- fix missing lazy resolver for complex types [#39][i39]
+
+## [1.21.0] - 2024-04-05
+
+### Added
+
+- add `@DtoConnectHidden` annotation [#28][i28]
+
+### Changed
+
+- `type` in `@ApiProperty` is now always explicitly set [#38][i38]
+
+## [1.20.0] - 2024-01-20
+
+### Added
+
+- support `@ValidateIf()` decorator
+- add `@DtoCreateValidateIf(...)` and `@DtoUpdateValidateIf(...)` decorators [#36][pr36] [#37][i37] (thanks to [iamciroja](https://github.com/iamciroja))
+
+## [1.19.3] - 2024-01-19
+
+### Fixed
+
+- fix CreateDto/UpdateDto on nullable Json fields: use `Prisma.NullableJsonNullValueInput` instead of `null`
+
+## [1.19.2] - 2024-01-18
+
+### Fixed
+
+- fix ApiProperty type in ConnectDto if field is JsonValue 
+
+## [1.19.1] - 2024-01-17
+
+- updated prettier and eslint
+
+## [1.19.0] - 2023-12-20
+
+### Changed
+
+- allow `null` for optional fields in CreateDto [#27][pr27] [#34][i34]
+
+## [1.18.4] - 2023-09-19
+
+### Fixed
+
+- add lazy resolver for complex types to avoid circular dependency issues [#31][i31]
+
+## [1.18.3] - 2023-09-14
+
+### Changed
+
+- support `[]` characters in `@DtoCastType()` annotation 
+
+## [1.18.2] - 2023-08-30
+
+### Fixed
+
+- prevent double type field in api properties [#29][pr29]
+
 ## [1.18.0] - 2023-08-10
 
 ### Added
@@ -248,3 +387,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [i22]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/22
 [i23]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/23
 [pr25]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/25
+[pr29]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/29
+[i31]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/31
+[pr27]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/27
+[i28]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/28
+[i32]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/32
+[i34]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/34
+[pr36]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/36
+[i37]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/37
+[i38]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/38
+[i39]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/39
+[i40]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/40
+[i42]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/42
+[pr43]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/43
+[i44]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/44
+[i48]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/48
+[i49]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/49
+[i51]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/51
+[i52]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/52
+[pr53]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/53
+[i54]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/54
+[i55]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/55
+[pr56]: https://github.com/Brakebein/prisma-generator-nestjs-dto/pull/56
+[i58]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/58
+[i63]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/63
+[i64]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/64
+[i65]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/65

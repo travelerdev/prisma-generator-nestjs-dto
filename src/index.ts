@@ -2,13 +2,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import makeDir from 'make-dir';
 import slash from 'slash';
-import { generatorHandler } from '@prisma/generator-helper';
+import { generatorHandler, GeneratorOptions } from '@prisma/generator-helper';
 import prettier from 'prettier';
-import { logger, parseEnvValue } from './utils';
+import { logger, parseEnvValue, warn } from './utils';
 import { run } from './generator';
-
-import type { GeneratorOptions } from '@prisma/generator-helper';
 import type { WriteableFileSpecs, NamingStyle } from './generator/types';
+import { isAnnotatedWith } from './generator/field-classifiers';
+import { DTO_CAST_TYPE } from './generator/annotations';
 
 const stringToBoolean = (input: string, defaultValue = false) => {
   if (input === 'true') {
@@ -37,6 +37,7 @@ export const generate = async (options: GeneratorOptions) => {
     entitySuffix = '',
     fileNamingStyle = 'camel',
     outputType = 'class',
+    generateFileTypes = 'all',
   } = options.generator.config;
 
   const exportRelationModifierClasses = stringToBoolean(
@@ -95,13 +96,13 @@ export const generate = async (options: GeneratorOptions) => {
 
   if (classValidation && outputType !== 'class') {
     throw new Error(
-      `To use 'validation' validation decorators, 'outputType' must be 'class'.`,
+      `To use 'classValidation' decorators, 'outputType' must be 'class'.`,
     );
   }
 
   if (classValidation && noDependencies) {
     throw new Error(
-      `To use 'validation' validation decorators, 'noDependencies' cannot be false.`,
+      `To use 'classValidation' decorators, 'noDependencies' cannot be false.`,
     );
   }
 
@@ -144,6 +145,26 @@ export const generate = async (options: GeneratorOptions) => {
     }
   }
 
+  const outputApiPropertyType = stringToBoolean(
+    options.generator.config.outputApiPropertyType,
+    true,
+  );
+  if (!outputApiPropertyType) {
+    warn(
+      '`outputApiPropertyType = "false"` is deprecated. Please use `wrapRelationsAsType = "true"` instead and report any issues.',
+    );
+  }
+
+  const wrapRelationsAsType = stringToBoolean(
+    options.generator.config.wrapRelationsAsType,
+    false,
+  );
+
+  const showDefaultValues = stringToBoolean(
+    options.generator.config.showDefaultValues,
+    false,
+  );
+
   const results = run({
     output,
     dmmf: options.dmmf,
@@ -163,7 +184,24 @@ export const generate = async (options: GeneratorOptions) => {
     definiteAssignmentAssertion,
     requiredResponseApiProperty,
     prismaClientImportPath,
+    outputApiPropertyType,
+    generateFileTypes,
+    wrapRelationsAsType,
+    showDefaultValues,
   });
+
+  // check for deprecated annotations
+  const deprecatedCastTypeAnnotation = [
+    ...options.dmmf.datamodel.models,
+    ...options.dmmf.datamodel.types,
+  ].some((model) =>
+    model.fields.some((field) => isAnnotatedWith(field, DTO_CAST_TYPE)),
+  );
+  if (deprecatedCastTypeAnnotation) {
+    warn(
+      '@DtoCastType annotation is deprecated. Please use DtoOverrideType instead.',
+    );
+  }
 
   const indexCollections: Record<string, WriteableFileSpecs> = {};
 
@@ -184,15 +222,19 @@ export const generate = async (options: GeneratorOptions) => {
     // combined index.ts in root output folder
     if (outputToNestJsResourceStructure) {
       const content: string[] = [];
-      Object.keys(indexCollections)
-        .sort()
-        .forEach((dirName) => {
-          const base = dirName
-            .split(/[\\\/]/)
-            .slice(flatResourceStructure ? -1 : -2);
-          content.push(
-            `export * from './${base[0]}${base[1] ? '/' + base[1] : ''}';`,
-          );
+      Object.entries(indexCollections)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .forEach(([dirName, file]) => {
+          if (output === dirName) {
+            content.push(file.content);
+          } else {
+            const base = dirName
+              .split(/[\\\/]/)
+              .slice(flatResourceStructure ? -1 : -2);
+            content.push(
+              `export * from './${base[0]}${base[1] ? '/' + base[1] : ''}';`,
+            );
+          }
         });
       indexCollections[output] = {
         fileName: path.join(output, 'index.ts'),
@@ -208,7 +250,7 @@ export const generate = async (options: GeneratorOptions) => {
 
   let prettierConfig: prettier.Options = {};
   if (applyPrettier) {
-    const prettierConfigFile = await prettier.resolveConfigFile(process.cwd());
+    const prettierConfigFile = await prettier.resolveConfigFile();
     if (!prettierConfigFile) {
       logger('Stylizing output DTOs with the default Prettier config.');
     } else {
@@ -226,7 +268,7 @@ export const generate = async (options: GeneratorOptions) => {
     }
 
     // Ensures that there are no parsing issues
-    // We know that the output files are always Typescript
+    // We know that the output files are always TypeScript
     prettierConfig.parser = 'typescript';
   }
 
@@ -236,7 +278,9 @@ export const generate = async (options: GeneratorOptions) => {
       .map(async ({ fileName, content }) => {
         await makeDir(path.dirname(fileName));
 
-        if (applyPrettier) content = prettier.format(content, prettierConfig);
+        if (applyPrettier) {
+          content = await prettier.format(content, prettierConfig);
+        }
 
         return fs.writeFile(fileName, content);
       }),
