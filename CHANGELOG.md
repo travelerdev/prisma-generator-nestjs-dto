@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.26.0] - 2025-03-15
+
+- update dependencies, upgrade to Prisma@5 [#66][i66]
+
 ## [1.25.1] - 2025-03-11
 
 ### Fixed
@@ -413,3 +417,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [i63]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/63
 [i64]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/64
 [i65]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/65
+[i66]: https://github.com/Brakebein/prisma-generator-nestjs-dto/issues/66
