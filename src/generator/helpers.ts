@@ -7,8 +7,8 @@ import {
   isUnique,
 } from './field-classifiers';
 import { scalarToTS } from './template-helpers';
-
 import type { DMMF } from '@prisma/generator-helper';
+import { WritableDeep } from 'type-fest';
 import type { TemplateHelpers } from './template-helpers';
 import type {
   IApiProperty,
@@ -136,8 +136,8 @@ export const makeCustomImports = (
 };
 
 export const mapDMMFToParsedField = (
-  field: DMMF.Field,
-  overrides: Partial<DMMF.Field> = {},
+  field: WritableDeep<DMMF.Field> | ParsedField,
+  overrides: Partial<ParsedField> = {},
   decorators: IDecorators = {},
 ): ParsedField => ({
   ...field,
@@ -146,7 +146,7 @@ export const mapDMMFToParsedField = (
 });
 
 export const getRelationScalars = (
-  fields: DMMF.Field[],
+  fields: ParsedField[],
 ): Record<string, string[]> => {
   const scalars = fields.flatMap(
     ({ relationFromFields = [] }) => relationFromFields,
@@ -166,7 +166,7 @@ export const getRelationScalars = (
 };
 
 interface GetRelationConnectInputFieldsParam {
-  field: DMMF.Field;
+  field: ParsedField;
   allModels: DMMF.Model[];
 }
 export const getRelationConnectInputFields = ({
@@ -233,7 +233,7 @@ export const getRelativePath = (from: string, to: string) => {
 };
 
 interface GenerateRelationInputParam {
-  field: DMMF.Field;
+  field: ParsedField;
   model: Model;
   allModels: Model[];
   templateHelpers: TemplateHelpers;
@@ -618,6 +618,9 @@ export const generateRelationInput = ({
         kind: 'relation-input',
         isRequired: relationInputClassProps.length === 1,
         isList: field.isList,
+        isId: field.isId,
+        isUnique: field.isUnique,
+        isReadOnly: field.isReadOnly,
       })),
       'plain',
       true,
@@ -637,7 +640,7 @@ export const generateRelationInput = ({
 
 interface GenerateUniqueInputParam {
   compoundName: string;
-  fields: DMMF.Field[];
+  fields: ParsedField[];
   model: Model;
   templateHelpers: TemplateHelpers;
 }
@@ -653,7 +656,7 @@ export const generateUniqueInput = ({
   const classValidators: IClassValidator[] = [];
 
   const parsedFields = fields.map((field) => {
-    const overrides: Partial<DMMF.Field> = { isRequired: true };
+    const overrides: Partial<ParsedField> = { isRequired: true };
     const decorators: {
       apiProperties?: IApiProperty[];
       classValidators?: IClassValidator[];

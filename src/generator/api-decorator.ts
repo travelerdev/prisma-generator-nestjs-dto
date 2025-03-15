@@ -1,4 +1,3 @@
-import { DMMF } from '@prisma/generator-helper';
 import { IApiProperty, ImportStatementParams, ParsedField } from './types';
 import { DTO_OVERRIDE_API_PROPERTY_TYPE } from './annotations';
 import { isAnnotatedWith } from './field-classifiers';
@@ -96,7 +95,7 @@ export function encapsulateString(value: string): string {
  * @param include All default to `true`. Set to `false` if you want to exclude a type of annotation.
  */
 export function parseApiProperty(
-  field: DMMF.Field,
+  field: ParsedField,
   include: {
     default?: boolean;
     doc?: boolean;

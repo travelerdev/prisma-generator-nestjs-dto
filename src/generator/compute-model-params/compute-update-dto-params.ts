@@ -38,8 +38,6 @@ import {
   mapDMMFToParsedField,
   zipImportStatementParams,
 } from '../helpers';
-
-import type { DMMF } from '@prisma/generator-helper';
 import {
   makeImportsFromNestjsSwagger,
   parseApiProperty,
@@ -78,7 +76,7 @@ export const computeUpdateDtoParams = ({
 
   const fields = model.fields.reduce((result, field) => {
     const { name } = field;
-    const overrides: Partial<DMMF.Field> = {
+    const overrides: Partial<ParsedField> = {
       isRequired: false,
       isNullable: !field.isRequired,
     };
