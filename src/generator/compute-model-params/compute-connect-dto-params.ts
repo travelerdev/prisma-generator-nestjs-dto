@@ -7,6 +7,7 @@ import {
   concatUniqueIntoArray,
   generateUniqueInput,
   getRelativePath,
+  makeCustomImports,
   makeImportsFromPrismaClient,
   mapDMMFToParsedField,
   uniq,
@@ -179,13 +180,12 @@ export const computeConnectDtoParams = ({
     templateHelpers.config.prismaClientImportPath,
     !templateHelpers.config.noDependencies,
   );
-
   const importNestjsSwagger = makeImportsFromNestjsSwagger(
     fields,
     apiExtraModels,
   );
-
   const importClassValidator = makeImportsFromClassValidator(classValidators);
+  const customImports = makeCustomImports(fields);
 
   return {
     model,
@@ -194,6 +194,7 @@ export const computeConnectDtoParams = ({
       ...importPrismaClient,
       ...importNestjsSwagger,
       ...importClassValidator,
+      ...customImports,
       ...imports,
     ]),
     extraClasses,

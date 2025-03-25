@@ -716,10 +716,15 @@ export const generateUniqueInput = ({
     fields,
     t.config.prismaClientImportPath,
   );
+  const customImports = makeCustomImports(fields);
 
   return {
     type: preAndPostfixedInputClassName,
-    imports: zipImportStatementParams([...importPrismaClient, ...imports]),
+    imports: zipImportStatementParams([
+      ...importPrismaClient,
+      ...customImports,
+      ...imports,
+    ]),
     generatedClasses,
     apiExtraModels,
     classValidators,
