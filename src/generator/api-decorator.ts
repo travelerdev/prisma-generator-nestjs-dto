@@ -160,7 +160,15 @@ export function parseApiProperty(
 
   const defaultValue = getDefaultValue(field);
   if (incl.default && defaultValue !== undefined) {
-    properties.push({ name: 'default', value: `${defaultValue}` });
+    if (defaultValue === 'now' && field.type === 'DateTime') {
+      properties.push({
+        name: 'default',
+        value: 'new Date().toISOString()',
+        noEncapsulation: true,
+      });
+    } else {
+      properties.push({ name: 'default', value: `${defaultValue}` });
+    }
   }
 
   if (!field.isRequired) {
