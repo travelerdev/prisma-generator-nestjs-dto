@@ -227,7 +227,7 @@ export const computeUpdateDtoParams = ({
           {
             ...field,
             ...overrides,
-            isNullable: !field.isRequired,
+            isNullable: overrides.isNullable ?? !field.isRequired,
           },
           {
             type: includeType,

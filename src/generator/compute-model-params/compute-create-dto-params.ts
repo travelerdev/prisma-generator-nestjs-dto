@@ -114,6 +114,7 @@ export const computeCreateDtoParams = ({
       // since relation input field types are translated to something like { connect: Foo[] }, the field type itself is not a list anymore.
       // You provide list input in the nested `connect` or `create` properties.
       overrides.isList = false;
+      overrides.isNullable = false;
 
       concatIntoArray(relationInputType.imports, imports);
       concatIntoArray(relationInputType.generatedClasses, extraClasses);
@@ -154,7 +155,8 @@ export const computeCreateDtoParams = ({
       overrides.isRequired = true;
     }
 
-    overrides.isNullable = !(field.isRequired || overrides.isRequired);
+    overrides.isNullable =
+      overrides.isNullable ?? !(field.isRequired || overrides.isRequired);
 
     if (isType(field)) {
       // don't try to import the class we're preparing params for
