@@ -150,9 +150,6 @@ export const computeCreateDtoParams = ({
     if (isDtoOptional) {
       overrides.isRequired = false;
     }
-    if (!field.isRequired) {
-      overrides.isNullable = true;
-    }
 
     if (isAnnotatedWith(field, DTO_CREATE_REQUIRED)) {
       overrides.isRequired = true;
