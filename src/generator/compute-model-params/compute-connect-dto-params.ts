@@ -7,6 +7,7 @@ import {
   concatUniqueIntoArray,
   generateUniqueInput,
   getRelativePath,
+  makeCustomImports,
   makeImportsFromPrismaClient,
   mapDMMFToParsedField,
   uniq,
@@ -18,6 +19,7 @@ import type {
   IDecorators,
   ImportStatementParams,
   Model,
+  ParsedField,
 } from '../types';
 import { TemplateHelpers } from '../template-helpers';
 import {
@@ -29,6 +31,7 @@ import {
   parseClassValidators,
 } from '../class-validator';
 import { DTO_CONNECT_HIDDEN } from '../annotations';
+import { WritableDeep } from 'type-fest';
 
 interface ComputeConnectDtoParamsParam {
   model: Model;
@@ -55,10 +58,13 @@ export const computeConnectDtoParams = ({
     fields: string[];
   }[] = model.uniqueIndexes;
   if (model.primaryKey) uniqueCompoundFields.unshift(model.primaryKey);
-  const uniqueCompounds: { name: string; fields: DMMF.Field[] }[] = [];
+  const uniqueCompounds: {
+    name: string;
+    fields: WritableDeep<DMMF.Field>[];
+  }[] = [];
 
   uniqueCompoundFields.forEach((uniqueIndex) => {
-    const fields: DMMF.Field[] = [];
+    const fields: WritableDeep<DMMF.Field>[] = [];
     uniqueIndex.fields.forEach((fieldName) => {
       const field = model.fields.find((f) => f.name === fieldName);
       if (field) fields.push(field);
@@ -79,7 +85,7 @@ export const computeConnectDtoParams = ({
    * connect?: (A | B)[];
    */
   // TODO consider adding documentation block to model that one of the properties must be provided
-  const uniqueFields = uniq([...idFields, ...isUniqueFields]);
+  const uniqueFields: ParsedField[] = uniq([...idFields, ...isUniqueFields]);
   const overrides =
     uniqueFields.length + uniqueCompounds.length > 1
       ? { isRequired: false, isNullable: false }
@@ -174,13 +180,12 @@ export const computeConnectDtoParams = ({
     templateHelpers.config.prismaClientImportPath,
     !templateHelpers.config.noDependencies,
   );
-
   const importNestjsSwagger = makeImportsFromNestjsSwagger(
     fields,
     apiExtraModels,
   );
-
   const importClassValidator = makeImportsFromClassValidator(classValidators);
+  const customImports = makeCustomImports(fields);
 
   return {
     model,
@@ -189,6 +194,7 @@ export const computeConnectDtoParams = ({
       ...importPrismaClient,
       ...importNestjsSwagger,
       ...importClassValidator,
+      ...customImports,
       ...imports,
     ]),
     extraClasses,

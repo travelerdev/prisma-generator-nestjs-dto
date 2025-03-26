@@ -22,8 +22,6 @@ import {
   mapDMMFToParsedField,
   zipImportStatementParams,
 } from '../helpers';
-
-import type { DMMF } from '@prisma/generator-helper';
 import type {
   Model,
   EntityParams,
@@ -55,7 +53,7 @@ export const computeEntityParams = ({
 
   const fields = model.fields.reduce((result, field) => {
     const { name } = field;
-    const overrides: Partial<DMMF.Field> = {
+    const overrides: Partial<ParsedField> = {
       isRequired: true,
       isNullable: !field.isRequired,
     };

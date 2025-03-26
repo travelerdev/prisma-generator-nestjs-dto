@@ -172,6 +172,7 @@ model Bike {
   chassis_number String
   model          String
   /// @DtoApiHidden
+  /// @DtoOverrideType(VendorType, @config/vendors)
   vendor         String
   year_from      Int
   year_to        Int

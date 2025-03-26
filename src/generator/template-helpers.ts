@@ -1,4 +1,3 @@
-import { DMMF } from '@prisma/generator-helper';
 import { ImportStatementParams, ParsedField } from './types';
 import { decorateApiProperty } from './api-decorator';
 import { decorateClassValidators } from './class-validator';
@@ -189,8 +188,8 @@ export const makeHelpers = ({
   ) => {
     const doFullUpdate =
       dtoType === 'update' &&
-      isType(field as DMMF.Field) &&
-      isAnnotatedWith(field as DMMF.Field, DTO_TYPE_FULL_UPDATE);
+      isType(field) &&
+      isAnnotatedWith(field, DTO_TYPE_FULL_UPDATE);
 
     const rawCastType = [DTO_OVERRIDE_TYPE, DTO_CAST_TYPE].reduce(
       (cast: string | false, annotation) => {
